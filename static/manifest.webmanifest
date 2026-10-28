@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "Ma feuille de semaine · ASC Electronique",
+  "short_name": "ASC Semaine",
+  "description": "Vos interventions, votre temps à l’atelier et vos feuilles de semaine en PDF.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f4",
+  "theme_color": "#17634f",
+  "icons": [
+    {"src": "/icons/asc-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/asc-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/asc-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

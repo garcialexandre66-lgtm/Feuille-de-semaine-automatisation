@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ASC Ma semaine">
+  <rect width="512" height="512" fill="#17634f"/>
+  <rect x="186" y="95" width="140" height="108" rx="18" fill="none" stroke="#fff" stroke-width="10"/>
+  <path d="M218 82v28m76-28v28M188 127h136" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+  <path d="m225 161 22 21 40-39" fill="none" stroke="#e5b76c" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="331" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="132" font-weight="800" letter-spacing="-5" fill="#fff">ASC</text>
+  <text x="256" y="376" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="600" letter-spacing="4" fill="#fff">MA SEMAINE</text>
+</svg>

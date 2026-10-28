@@ -2,7 +2,13 @@
 <html lang="fr">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ma semaine · ASC Electronique</title>
-<link rel="icon" href="data:,">
+<link rel="icon" type="image/svg+xml" href="/icons/asc.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/asc-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/asc-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#17634f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ASC Semaine">
 <link rel="stylesheet" href="style.css">
 <header><span class="brand">ASC <b>Electronique</b></span><span>MON CARNET D’INTERVENTIONS</span></header>
 <section id="login-panel" class="login-panel" hidden><p class="eyebrow">MON ESPACE PERSONNEL</p><h1>Ma feuille de semaine.</h1><p>Connectez-vous avec le même code sur votre téléphone et votre ordinateur.</p><form id="login-form"><label>Code d’accès personnel<input id="access-code" type="password" minlength="8" maxlength="128" autocomplete="current-password" required></label><button class="primary" type="submit">Ouvrir mes semaines</button></form><p id="login-error" role="alert"></p><section id="cloud-setup" hidden><h2>Première installation</h2><p>La clé d’installation est le secret SETUP_TOKEN ajouté dans Cloudflare. Elle sert une seule fois, pour vous permettre de choisir votre code.</p><form id="cloud-setup-form"><label>Clé d’installation<input id="setup-token" type="password" minlength="16" autocomplete="off" required></label><label>Votre nouveau code personnel<input id="new-code" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label><label>Confirmer le code<input id="confirm-code" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label><button class="primary">Créer mon espace</button></form><p id="setup-error" role="alert"></p></section><p id="setup-help" hidden>Le code doit d’abord être créé sur le serveur avec la commande indiquée dans le guide d’installation. Ne partagez pas votre code ici.</p></section>
