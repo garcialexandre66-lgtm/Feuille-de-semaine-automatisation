@@ -7,8 +7,8 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f6f7f4",
-  "theme_color": "#17634f",
+  "background_color": "#f2f6fc",
+  "theme_color": "#163968",
   "icons": [
     {"src": "/icons/asc-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
     {"src": "/icons/asc-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},

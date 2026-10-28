@@ -53,6 +53,31 @@ with sync_playwright() as p:
     other.locator('#week').fill('2027-01-04')
     assert other.locator('#total').inner_text()=='16 h 30'
     assert other.locator('#overtime').inner_text()=='0 h 30'
+    # Personnalisation : roulette, clavier, persistance et mises en page.
+    page.locator('#theme-open').click()
+    page.get_by_role('button',name='Violet',exact=True).click()
+    assert page.locator('#theme-wheel').get_attribute('aria-valuenow')=='275'
+    page.locator('#theme-wheel').focus()
+    page.keyboard.press('ArrowRight')
+    assert page.locator('#theme-wheel').get_attribute('aria-valuenow')=='280'
+    page.locator('#theme-done').click()
+    assert page.evaluate("() => document.documentElement.scrollWidth <= innerWidth")
+    page.reload();page.locator('#application').wait_for(state='visible')
+    assert page.evaluate("() => localStorage.getItem('asc-theme-hue-v1')")=='280'
+    assert page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--theme-hue').trim()")=='280'
+    page.locator('#week').fill('2027-01-04')
+    page.screenshot(path='apercus/theme-violet-mobile.png',full_page=True)
+    page.locator('#theme-open').click()
+    page.locator('#theme-wheel').click(position={'x':148,'y':80})
+    assert page.locator('#theme-wheel').get_attribute('aria-valuenow')=='90'
+    page.locator('#theme-reset').click()
+    assert page.locator('#theme-wheel').get_attribute('aria-valuenow')=='213'
+    page.screenshot(path='apercus/roulette-couleurs.png',full_page=True)
+    page.locator('#theme-done').click()
+    page.set_viewport_size({'width':1280,'height':950})
+    assert page.evaluate("() => document.documentElement.scrollWidth <= innerWidth")
+    page.screenshot(path='apercus/design-colore-ordinateur.png',full_page=True)
+    page.set_viewport_size({'width':390,'height':844})
     # Exports locaux : aucun appel à /export/pdf ni à LibreOffice.
     page.route('**/export*',lambda route:route.abort())
     with page.expect_download(timeout=90000) as event:

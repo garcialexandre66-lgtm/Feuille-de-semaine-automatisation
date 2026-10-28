@@ -40,6 +40,10 @@ Choisir une semaine (la date est ramenée au lundi), puis un jour. Ajouter jusqu
 
 Les trajets aller-retour sont saisis en minutes. Les autres durées acceptent `2h30`, `2:30` ou `2h` ; un nombre entier seul signifie des heures. Total = trajet + TPE + régie + chantier + SAV. Heures supplémentaires = maximum de zéro et total journalier moins 8 h ; elles ne sont pas ajoutées une seconde fois au total.
 
+## Couleurs de l’application
+
+Le bouton « Couleurs » dans l’en-tête ouvre une roulette, un curseur et cinq palettes. Le thème s’applique à toutes les pages et aux formulaires. Le contraste des accents est adapté à la teinte choisie. La préférence est mémorisée uniquement sur cet appareil ; elle ne modifie ni les semaines synchronisées, ni le modèle du PDF, ni l’icône installée. La roulette est également utilisable au clavier avec les flèches. « Couleurs d’origine » rétablit la palette par défaut.
+
 ## PDF et ODS
 
 Le bouton principal génère un PDF prêt à joindre manuellement au mail de la secrétaire. Il reprend le modèle fourni, sur une page A4. Les bons de préparation et d’intervention restent vides. Les ajustements d’impression se font sur une copie temporaire ; le modèle original reste intact.
