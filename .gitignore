@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+data/
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.env
+apercus/
