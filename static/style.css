@@ -253,3 +253,16 @@ textarea:focus { outline:3px solid #47abc84d; outline-offset:1px; }
  .reminder { flex-wrap:wrap; }
  .state-badge { font-size:11px; padding:8px 10px; white-space:nowrap; }
 }
+.recovery-panel { border-color:var(--line); background:linear-gradient(120deg,hsl(var(--theme-hue,213) 70% 97%),white); }
+.recovery-balance { display:block; font-size:28px; color:var(--blue); margin:12px 0; }
+.recovery-totals { display:flex; gap:12px; flex-wrap:wrap; margin:20px 0; }
+.recovery-totals span { background:white; border:1px solid var(--line); border-radius:12px; padding:12px; font-size:12px; flex:1; }
+.recovery-totals b { display:block; font-size:19px; margin-top:8px; }
+.recovery-panel label { margin:14px 0; }
+.recovery-panel details { border-top:1px solid var(--line); padding-top:8px; }
+.recovery-panel summary { color:var(--blue); font-weight:650; }
+#school-dialog label { margin:16px 0; }
+#school-list { max-height:240px; overflow:auto; margin-top:18px; }
+@media(max-width:600px){ .recovery-balance{font-size:23px}.recovery-totals{gap:8px}.recovery-totals span{min-width:95px;padding:10px;font-size:11px} }
+
+#days { grid-template-columns:repeat(5,minmax(0,1fr)); }

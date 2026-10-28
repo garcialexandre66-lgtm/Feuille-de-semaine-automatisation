@@ -44,13 +44,13 @@ with sync_playwright() as p:
         page.locator('#'+kind).click();page.locator('#leave-form button.primary').click()
     tab(page,'month');page.locator('#month').fill('2027-01')
     assert page.locator('#month-worked').inner_text()=='25 h 30'
-    assert page.locator('#month-overtime').inner_text()=='1 h 30'
+    assert page.locator('#month-overtime').inner_text()=='0 h 00'
     assert page.locator('#month-leave').inner_text()=='1 j';assert page.locator('#month-sick').inner_text()=='1 j'
-    assert '26/01/2027' in page.locator('#overtime-notebook').input_value()
+    assert 'Aucune heure supplémentaire' in page.locator('#overtime-notebook').input_value()
     page.locator('#month-notes').fill('Heures à vérifier avec la secrétaire.')
     with page.expect_download() as event:page.locator('#download-notes').click()
     notes=Path('apercus/bloc-notes-test.txt');event.value.save_as(notes)
-    assert '1 h 30' in notes.read_text();assert 'Heures à vérifier' in notes.read_text()
+    assert '0 h 00' in notes.read_text();assert 'Heures à vérifier' in notes.read_text()
     synced(page)
     print('Bilan mensuel et favoris validés.',flush=True)
     # Statut manuel, automatiquement invalidé si la feuille est corrigée.
@@ -97,7 +97,7 @@ with sync_playwright() as p:
     second=browser.new_context(locale='fr-FR',reduced_motion='reduce');other=second.new_page();other.goto(os.environ['ASC_TEST_URL'])
     other.locator('#access-code').fill('test-only-cloud-code');other.get_by_role('button',name='Ouvrir mes semaines').click();other.locator('#application').wait_for(state='visible')
     tab(other,'month');other.locator('#month').fill('2027-01')
-    assert other.locator('#month-overtime').inner_text()=='2 h 00'
+    assert other.locator('#month-overtime').inner_text()=='0 h 00'
     print('Deuxième appareil connecté. Test de fermeture hors ligne.',flush=True)
     # Fermeture puis réouverture hors connexion, avec code requis dans un nouvel onglet.
     context.set_offline(True);page.close();page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
@@ -105,9 +105,9 @@ with sync_playwright() as p:
     page.locator('#access-code').fill('incorrect-code');page.get_by_role('button',name='Ouvrir mes semaines').click()
     assert page.locator('#application').is_hidden()
     page.locator('#access-code').fill('test-only-cloud-code');page.get_by_role('button',name='Ouvrir mes semaines').click();page.locator('#application').wait_for(state='visible')
-    tab(page,'day');atelier(page,'2027-01-30')
+    tab(page,'day');atelier(page,'2027-01-22')
     page.wait_for_function('() => cacheSaved && dirty')
-    page.reload();page.locator('#application').wait_for(state='visible');page.locator('#day-picker').fill('2027-01-30')
+    page.reload();page.locator('#application').wait_for(state='visible');page.locator('#day-picker').fill('2027-01-22')
     assert page.locator('#daytotal').inner_text()=='8 h 00'
     # Le PDF est généré sans réseau ; le bloc-notes demeure conservé.
     tab(page,'weeks');page.locator('#week').fill('2027-01-25')
@@ -127,7 +127,7 @@ with sync_playwright() as p:
     context.set_offline(False);synced(page)
     tab(page,'month');page.locator('#month').fill('2027-01')
     assert page.locator('#month-notes').input_value()=='Note ajoutée sur ordinateur pendant la coupure.'
-    tab(other,'day');other.locator('#sync-now').click();other.locator('#day-picker').fill('2027-01-30')
+    tab(other,'day');other.locator('#sync-now').click();other.locator('#day-picker').fill('2027-01-22')
     other.wait_for_function("() => document.querySelector('#daytotal').textContent==='8 h 00'")
     assert page.locator('#conflict').is_hidden()
     assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth')

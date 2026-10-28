@@ -43,7 +43,7 @@ def validate(data):
                 if type(value) is not int or not 0 <= value <= 1440:
                     raise ValueError('Les durées doivent être des minutes entières positives.')
                 total += value
-        if any(item.get('kind') in ('leave', 'sick') for item in day) and (len(day) != 1 or total != 0 or day[0]['client'] != {'leave':'Congé', 'sick':'Arrêt maladie'}[day[0]['kind']]):
+        if any(item.get('kind') in ('leave', 'sick', 'recovery') for item in day) and (len(day) != 1 or total != 0 or day[0]['client'] != {'leave':'Congé', 'sick':'Arrêt maladie', 'recovery':'Récupération'}[day[0]['kind']]):
             raise ValueError('Une absence doit être seule dans la journée et sans heures travaillées.')
         if total > 1440:
             raise ValueError('Une journée ne peut pas dépasser 24 heures.')
@@ -63,6 +63,24 @@ def validate_extras(state):
         date.fromisoformat(key)
         if not isinstance(value, dict) or not isinstance(value.get('sentAt'), str) or not isinstance(value.get('signature'), str) or not re.fullmatch(r'[a-f0-9]{8}', value['signature']):
             raise ValueError('Statut de semaine invalide.')
+    recovery = state.get('recovery')
+    if recovery is not None:
+        if not isinstance(recovery, dict) or not isinstance(recovery.get('weeks'), dict):
+            raise ValueError('Compteur de récupération invalide.')
+        date.fromisoformat(recovery['startDate'])
+        opening = recovery.get('openingMinutes')
+        if opening is not None and (type(opening) is not int or abs(opening) > 600000):
+            raise ValueError('Solde de départ invalide.')
+        for key, value in recovery['weeks'].items():
+            if date.fromisoformat(key).weekday() != 0 or not isinstance(value, dict) or value.get('source') not in ('work', 'school') or type(value.get('credit')) is not int or not 0 <= value['credit'] <= 10080 or not isinstance(value.get('signature'), str) or not re.fullmatch(r'[a-f0-9]{8}', value['signature']) or not isinstance(value.get('confirmedAt'), str):
+                raise ValueError('Crédit de récupération invalide.')
+    school_dates = state.get('schoolDates', {})
+    if not isinstance(school_dates, dict):
+        raise ValueError('Planning école invalide.')
+    for key, value in school_dates.items():
+        date.fromisoformat(key)
+        if value is not True:
+            raise ValueError('Planning école invalide.')
     favorites = state.get('favorites', [])
     if not isinstance(favorites, list) or len(favorites) > 100:
         raise ValueError('Favoris invalides.')
@@ -122,12 +140,12 @@ def export_ods(data):
 
         put(cells(rows[1])[0], 'Nom du technicien : ' + data['name'].strip())
         put(cells(rows[2])[0], f'Semaine du {start:%d/%m/%Y} au {start + timedelta(days=6):%d/%m/%Y}')
+        cumulative = 0
         for day_index, day in enumerate(data['days']):
-            cumulative = 0
             for index, item in enumerate(day):
                 line = cells(rows[5 + day_index * 8 + index])
                 minutes = sum(item[k] for k in FIELDS)
-                overtime = max(0, cumulative + minutes - 480) - max(0, cumulative - 480)
+                overtime = max(0, cumulative + minutes - 2100) - max(0, cumulative - 2100)
                 cumulative += minutes
                 values = [item['client'], item['city'], '', '', str(item['travel']) if item['travel'] else '',
                           *[duration(item[k]) for k in FIELDS[1:]], duration(minutes), duration(overtime)]

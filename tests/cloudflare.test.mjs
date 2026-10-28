@@ -62,17 +62,14 @@ test('limite de tentatives de connexion',async()=>{
  }finally{await mf.dispose();}
 });
 
-test('bilan mensuel : limites du mois, heures sup quotidiennes et absences',()=>{
- const state=blank();const empty=()=>Array.from({length:7},()=>[]);
- state.weeks['2026-12-28']=empty();
- state.weeks['2026-12-28'][3]=[entry({tpe:600})]; // 31 décembre : exclu de janvier.
- state.weeks['2026-12-28'][4]=[entry({tpe:540})]; // 1 janvier : 1 heure sup.
- state.weeks['2027-01-25']=empty();
- state.weeks['2027-01-25'][1]=[entry({tpe:60,travel:60,chantier:390})];
- state.weeks['2027-01-25'][2]=[entry({kind:'leave',client:'Congé',tpe:0})];
- state.weeks['2027-01-25'][3]=[entry({kind:'sick',client:'Arrêt maladie',tpe:0})];
- const report=globalThis.Timesheet.monthSummary(state,'2027-01');
- assert.equal(report.worked,1050);assert.equal(report.overtime,90);assert.equal(report.leave,1);assert.equal(report.sick,1);assert.equal(report.lines.length,2);
+test('35 h hebdomadaires : une semaine de 39 h donne 4 h, sans double compte quotidien',()=>{
+ const state=blank();const week=Array.from({length:7},()=>[]);
+ for(let i=0;i<4;i++)week[i]=[entry()];week[4]=[entry({tpe:420})];state.weeks['2027-01-04']=week;
+ assert.equal(globalThis.Timesheet.weekOvertime(week),240);
+ const report=globalThis.Timesheet.monthSummary(state,'2027-01');assert.equal(report.worked,2340);assert.equal(report.overtime,240);assert.equal(report.lines.length,1);
+ state.weeks['2026-12-28']=structuredClone(week);
+ assert.equal(globalThis.Timesheet.monthSummary(state,'2026-12').overtime,0);
+ assert.equal(globalThis.Timesheet.monthSummary(state,'2027-01').overtime,480);
 });
 test('statut envoyé invalidé par une correction, notes et favoris conservés',()=>{
  const s=blank();s.weeks['2027-01-04']=[[entry()],...Array.from({length:6},()=>[])];
@@ -87,4 +84,28 @@ test('fusion hors connexion : journées distinctes réunies, même journée en c
  const local=structuredClone(base),remote=structuredClone(base);local.weeks['2027-01-04'][0]=[entry()];remote.weeks['2027-01-04'][1]=[entry({tpe:510})];remote.monthNotes['2027-01']='Note de l’autre appareil';
  const merged=globalThis.Timesheet.merge(base,local,remote);assert.equal(merged.weeks['2027-01-04'][0][0].tpe,480);assert.equal(merged.weeks['2027-01-04'][1][0].tpe,510);assert.equal(merged.monthNotes['2027-01'],remote.monthNotes['2027-01']);
  remote.weeks['2027-01-04'][0]=[entry({tpe:540})];assert.equal(globalThis.Timesheet.merge(base,local,remote),null);
+});
+
+test('récupération : départ inconnu, semaines validées et débit de 8 h',()=>{
+ const s=blank();s.recovery.startDate='2026-10-01';
+ for(const key of ['2026-10-05','2026-10-12']){
+  s.weeks[key]=Array.from({length:7},(_,i)=>i<4?[entry()]:i===4?[entry({tpe:420})]:[]);
+  s.recovery.weeks[key]={source:'work',credit:240,signature:globalThis.Timesheet.signature('',s.weeks[key]),confirmedAt:'2026-10-20T12:00:00Z'};
+ }
+ s.weeks['2026-10-19']=[[entry({kind:'recovery',client:'Récupération',tpe:0})],...Array.from({length:6},()=>[])];
+ let result=globalThis.Timesheet.recoverySummary(s,new Date('2026-10-28T12:00:00Z'));assert.equal(result.balance,null);assert.equal(result.earned,480);assert.equal(result.taken,480);assert.equal(result.change,0);
+ s.recovery.openingMinutes=600;result=globalThis.Timesheet.recoverySummary(s,new Date('2026-10-28T12:00:00Z'));assert.equal(result.balance,600);
+ s.weeks['2026-10-05'][0][0].tpe=500;result=globalThis.Timesheet.recoverySummary(s,new Date('2026-10-28T12:00:00Z'));assert.equal(result.earned,240);assert.equal(result.invalid,1);
+});
+test('école prévue sans crédit, école 39 h confirmée créditée une seule fois',()=>{
+ const s=blank();s.recovery.startDate='2026-10-01';s.schoolDates['2026-10-05']=true;
+ assert.equal(globalThis.Timesheet.recoverySummary(s).earned,0);
+ s.weeks['2026-10-05']=Array.from({length:7},()=>[]);s.recovery.weeks['2026-10-05']={source:'school',credit:240,signature:globalThis.Timesheet.signature('',s.weeks['2026-10-05']),confirmedAt:'2026-10-10T12:00:00Z'};
+ assert.equal(globalThis.Timesheet.recoverySummary(s).earned,240);assert.equal(globalThis.Timesheet.monthSummary(s,'2026-10').school,2340);assert.equal(globalThis.Timesheet.monthSummary(s,'2026-10').overtime,240);
+ s.recovery.weeks['2026-10-05'].credit=240;assert.equal(globalThis.Timesheet.recoverySummary(s).earned,240);
+});
+
+test('mois de récupération rattaché au vendredi : pas au dimanche non travaillé',()=>{
+ const s=blank();s.weeks['2026-10-26']=Array.from({length:7},(_,i)=>i<4?[entry()]:i===4?[entry({tpe:420})]:[]);
+ assert.equal(globalThis.Timesheet.monthSummary(s,'2026-10').overtime,240);assert.equal(globalThis.Timesheet.monthSummary(s,'2026-11').overtime,0);
 });

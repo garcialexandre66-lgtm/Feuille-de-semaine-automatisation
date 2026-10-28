@@ -95,7 +95,7 @@ $('keep-local').onclick=async()=>{
  if(!confirm('Conserver cette version à la place de celle du serveur ? Les modifications concurrentes de l’autre appareil seront remplacées.'))return;
  try{const result=await api('/api/state');revision=result.revision;baseStore=checkStore(result.store);conflicting=false;$('conflict').hidden=true;dirty=true;generation++;await persist();await push();}catch(error){syncMessage(error.message,true);}
 };
-$('migrate-local').onclick=()=>{if(!confirm('Importer les anciennes semaines de ce navigateur ? Les mêmes semaines seront remplacées.'))return;store=mergeImported(store,checkStore(legacy));save();render();$('migrate-local').hidden=true;};
+$('migrate-local').onclick=()=>{if(!confirm('Importer les anciennes semaines de ce navigateur ? Les mêmes semaines seront remplacées.'))return;const incoming=checkStore(legacy);incoming.recovery=store.recovery;store=mergeImported(store,incoming);save();render();$('migrate-local').hidden=true;};
 window.addEventListener('beforeunload',event=>{if(dirty&&!cacheSaved){event.preventDefault();event.returnValue='';}});
 window.addEventListener('online',reconnect);window.addEventListener('offline',()=>syncMessage(cacheSaved?'Hors connexion · enregistré sur cet appareil':'Hors connexion · enregistrement local en cours'));
 window.addEventListener('focus',()=>{if(connected)pull();else if(navigator.onLine)reconnect();});setInterval(()=>{if(connected)pull();else if(navigator.onLine)reconnect();renderReminder();},15000);

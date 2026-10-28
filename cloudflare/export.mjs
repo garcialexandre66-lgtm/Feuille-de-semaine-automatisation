@@ -20,10 +20,10 @@ export async function createPdf(data){
  text(`Semaine du ${dateText(data.week)} au ${endText}`,18.25,67.4,126,6.5);
  // Coordinates measured on the original ASC model, fitted to one A4 page.
  const columns=[52.166,138.263,191.282,233.804,273.688,293.630,313.571,328.791,344.010,360.281,380.222,400.164];
+ let cumulative=0;
  data.days.forEach((day,dayIndex)=>{
-  let cumulative=0;
   day.forEach((item,index)=>{
-   const minutes=total(item),overtime=Math.max(0,cumulative+minutes-480)-Math.max(0,cumulative-480);cumulative+=minutes;
+   const minutes=total(item),overtime=Math.max(0,cumulative+minutes-2100)-Math.max(0,cumulative-2100);cumulative+=minutes;
    const values=[item.client,item.city,'','',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(overtime)];
    const top=105.8+(dayIndex*8+index)*12.481;
    values.forEach((value,i)=>text(value,columns[i]+1,top,columns[i+1]-columns[i]-2));
@@ -50,8 +50,9 @@ export async function createOds(data){
  put(cells(rows[1])[0],`Nom du technicien : ${data.name}`);
  const end=new Date(data.week+'T12:00:00');end.setDate(end.getDate()+6);
  put(cells(rows[2])[0],`Semaine du ${dateText(data.week)} au ${end.toLocaleDateString('fr-FR')}`);
- data.days.forEach((day,dayIndex)=>{let cumulative=0;day.forEach((item,index)=>{
-  const minutes=total(item),extra=Math.max(0,cumulative+minutes-480)-Math.max(0,cumulative-480);cumulative+=minutes;
+ let cumulative=0;
+ data.days.forEach((day,dayIndex)=>{day.forEach((item,index)=>{
+  const minutes=total(item),extra=Math.max(0,cumulative+minutes-2100)-Math.max(0,cumulative-2100);cumulative+=minutes;
   const values=[item.client,item.city,'','',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(extra)];
   const line=cells(rows[5+dayIndex*8+index]);values.forEach((value,i)=>put(line[i+2],value));
  });});

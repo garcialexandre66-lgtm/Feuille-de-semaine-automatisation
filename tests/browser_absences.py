@@ -41,7 +41,7 @@ with tempfile.TemporaryDirectory() as folder:
             page.once('dialog',lambda d:d.accept())
             page.locator('#leave-form button.primary').click()
             assert page.locator('#dayremaining').inner_text()=='Congé'
-            assert page.locator('#days button span').all_inner_texts()==['Congé']*5+['0 h 00']*2
+            assert page.locator('#days button span').all_inner_texts()==['Congé']*5
             assert page.locator('#add').is_disabled()
             assert page.locator('#total').inner_text()=='0 h 00'
             # Une période future traverse deux semaines, week-ends ignorés.
@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory() as folder:
             page.locator('#leave-form button.primary').click()
             assert page.locator('#day-picker').input_value()=='2027-02-01'
             page.locator('#day-picker').fill('2027-02-08')
-            assert page.locator('#days button span').all_inner_texts()==['Congé']*5+['0 h 00']*2
+            assert page.locator('#days button span').all_inner_texts()==['Congé']*5
             # Arrêt maladie sur la semaine entière, incluant les week-ends.
             page.locator('#day-picker').fill('2027-03-01')
             page.locator('.day-more').evaluate('(d)=>d.open=true')
@@ -60,25 +60,28 @@ with tempfile.TemporaryDirectory() as folder:
             page.locator('#leave-week').click()
             page.locator('#leave-weekend').check()
             page.locator('#leave-form button.primary').click()
-            assert page.locator('#days button span').all_inner_texts()==['Arrêt maladie']*7
+            assert page.locator('#days button span').all_inner_texts()==['Arrêt maladie']*5
             assert page.locator('#overtime').inner_text()=='0 h 00'
             # Deux motifs dans la même semaine sur des dates distinctes.
             page.locator('#day-picker').fill('2027-01-04')
             page.locator('#days button').last.click()
             page.locator('.day-more').evaluate('(d)=>d.open=true')
             page.locator('#sick').click()
+            page.locator('#leave-start').fill('2027-01-10')
+            page.locator('#leave-end').fill('2027-01-10')
+            page.locator('#leave-weekend').check()
             page.locator('#leave-form button.primary').click()
             page.wait_for_function("() => document.querySelector('#sync-status').textContent==='✓ Semaines synchronisées'")
             page.reload();page.locator('#application').wait_for(state='visible')
             page.locator('#day-picker').fill('2027-01-04')
             page.locator('#days button').last.click()
-            assert page.locator('#dayremaining').inner_text()=='Arrêt maladie'
+            assert page.locator('#dayremaining').inner_text()=='Congé'
             page.locator('#app-tabs [data-view=weeks]').click()
             with page.expect_download(timeout=90000) as event:
                 page.locator('#export').click()
             pdf=Path(folder)/'absences.pdf';event.value.save_as(pdf)
             text=subprocess.run(['pdftotext','-layout',str(pdf),'-'],capture_output=True,text=True,check=True).stdout
-            assert text.count('Congé')==5
+            assert text.count('Congé')==6
             assert 'Arrêt maladie' in text
             # Aucun des motifs ne devient un client mémorisé.
             assert not page.locator('#remembered-clients option').count()

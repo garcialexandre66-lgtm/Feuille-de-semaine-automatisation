@@ -32,7 +32,7 @@ export function validateStore(store){
     for(const key of ['travel','tpe','regie','chantier','sav']){if(!Number.isInteger(item[key])||item[key]<0||item[key]>1440)throw Error('Durée invalide.');total+=item[key];}
    }
    if(total>1440)throw Error('Une journée ne peut pas dépasser 24 heures.');
-   if(day.some(i=>['leave','sick'].includes(i.kind))&&(day.length!==1||total!==0||day[0].client!=={leave:'Congé',sick:'Arrêt maladie'}[day[0].kind]))throw Error('Une absence doit être seule et sans heures travaillées.');
+   if(day.some(i=>['leave','sick','recovery'].includes(i.kind))&&(day.length!==1||total!==0||day[0].client!=={leave:'Congé',sick:'Arrêt maladie',recovery:'Récupération'}[day[0].kind]))throw Error('Une absence doit être seule et sans heures travaillées.');
   }
  }
  globalThis.Timesheet.extras(store);

@@ -20,7 +20,7 @@ try{
  for(const sql of (await readFile('cloudflare/migrations/0001_initial.sql','utf8')).split(';').filter(s=>s.trim()))await db.prepare(sql).run();
  const url=await mf.ready;
  await mkdir('apercus',{recursive:true});
- const child=spawn('python3',['tests/cloudflare_browser.py'],{stdio:'inherit',env:{...process.env,ASC_TEST_URL:url.href,ASC_TEST_SETUP:setupToken}});
+ const child=spawn('python3',[process.argv[2]||'tests/cloudflare_browser.py'],{stdio:'inherit',env:{...process.env,ASC_TEST_URL:url.href,ASC_TEST_SETUP:setupToken}});
  const code=await new Promise((resolve,reject)=>{child.once('exit',resolve);child.once('error',reject);});
  if(code)process.exitCode=code;
 }finally{await mf.dispose();}

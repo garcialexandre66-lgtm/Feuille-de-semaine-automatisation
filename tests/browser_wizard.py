@@ -38,7 +38,7 @@ with sync_playwright() as p:
  page.locator('[name=chantier]').fill('6h30')
  page.locator('#next').click()
  assert '8 h 30' in page.locator('#recap').inner_text()
- assert '0 h 30' in page.locator('#recap').inner_text()
+ assert '35 h' in page.locator('#recap').inner_text()
  page.screenshot(path='apercus/saisie-etapes-telephone.png',full_page=True)
  page.locator('#next').click()
  assert page.locator('#daytotal').inner_text()=='8 h 30'

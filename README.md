@@ -21,9 +21,9 @@ Le serveur Python reste nécessaire : Cloudflare Pages seul ne peut pas exécute
 
 ## Une application en trois écrans
 
-- **Ma journée** : choisir la date, ajouter son travail ou remplir 8 h à l’atelier. Congés, maladie et copie restent accessibles dans « Congé, maladie ou copie d’une journée ».
+- **Ma journée** : navigation du lundi au vendredi uniquement, choisir la date, ajouter son travail ou remplir 8 h à l’atelier. Congés, maladie et copie restent accessibles dans « Congé, maladie ou copie d’une journée ».
 - **Mes semaines** : choisir une semaine, partager ou télécharger le PDF et renseigner « Envoyée ». L’historique présente aussi le statut. Une correction du nom ou des lignes transforme automatiquement « Envoyée » en « À renvoyer ». Aucun mail n’est envoyé par le bouton de statut.
-- **Mon bilan** : heures travaillées et supplémentaires du mois, jours de congé et de maladie séparés. Seules les journées qui appartiennent au mois sont comptées, y compris si une semaine commence le mois précédent. Le bloc-notes présente automatiquement le détail quotidien des heures supplémentaires ; les notes personnelles sont modifiables et synchronisées. Une exportation texte permet de conserver le bilan.
+- **Mon bilan** : heures travaillées et supplémentaires du mois, jours de congé et de maladie séparés. Seules les journées qui appartiennent au mois sont comptées, y compris si une semaine commence le mois précédent. Le bloc-notes présente automatiquement le détail hebdomadaire au-delà de 35 h, rattaché au mois du vendredi de fin de semaine ; les notes personnelles sont modifiables et synchronisées. Une exportation texte permet de conserver le bilan.
 
 Le nom, les favoris, les couleurs, les sauvegardes, le rappel et le verrouillage sont regroupés dans **Réglages**.
 
@@ -41,6 +41,20 @@ Il est ensuite possible de fermer puis rouvrir sans réseau, saisir des journée
 
 Le mode hors connexion dépend des capacités et du stockage du navigateur. Un navigateur privé, l’effacement des données ou l’éviction du stockage par le système peuvent supprimer la copie locale. Conserver des sauvegardes JSON ; ces fichiers sont en clair et doivent rester privés. La version Python profite aussi du stockage local chiffré mais ne prépare pas son interface pour une réouverture sans réseau.
 
+## Récupération et école
+
+Contrat de 35 h : une semaine saisie de 39 h propose 4 h de crédit. Le compteur dans Mon bilan demande une validation explicite par semaine (à partir du vendredi). Une seconde validation remplace la première, sans doublon. Une correction des journées invalide le crédit et demande une revalidation. Le champ de crédit reste vérifiable/modifiable pour les semaines incomplètes ou avec absence, dont la règle doit être confirmée avec l’entreprise.
+
+Le solde de départ est **inconnu par défaut**. Le compteur affiche alors uniquement les mouvements suivis depuis la date de début ; il ne présente pas ce résultat comme le solde réel. Le solde de départ peut être renseigné ultérieurement avec sa date de référence. Les crédits plus anciens que le début du suivi ne sont pas inclus.
+
+Une journée « Récupération — 8 h » porte la mention Récupération sur la feuille, sans heures travaillées. Elle déduit 8 h si elle est passée ou réservée si elle est future. Les jours de récupération ne sont pas ajoutés automatiquement aux heures travaillées pour calculer un crédit ; vérifier la règle de l’entreprise pour une semaine comportant une récupération ou une autre absence.
+
+Réglages → Mon planning d’école permet de marquer les dates prévues (lundi au vendredi). Un planning préparé peut être importé en JSON (liste de dates ISO ou objet contenant `dates`), sans remplacer les autres données personnelles. Ces dates ne créent ni heures effectuées ni crédit. Le choix « École — heures effectuées » dans la saisie quotidienne permet ensuite de renseigner la durée réelle de formation ; ces heures sont portées en TPE avec le libellé École et comptent dans les 35 h. Une semaine d’école de 39 h peut être confirmée explicitement dans le compteur pour 4 h de crédit. Cette confirmation ne remplit pas des horaires journaliers inconnus dans le PDF. Le planning réel fourni par l’utilisateur doit être relevé à partir d’un document suffisamment lisible ; aucune date n’est devinée.
+
+Le samedi et le dimanche sont retirés de la saisie quotidienne. Les sept jours du modèle original sont conservés en données et à l’export, afin que le samedi de congé soit bien compté et affiché sans saisir de travail le week-end.
+
+Dans les exports, H.SUP est désormais le dépassement de 35 h **sur la semaine entière**, réparti sur les dernières lignes, sans additionner les dépassements quotidiens. Le repère de 8 h dans Ma journée reste un objectif journalier, pas le calcul du crédit.
+
 ## Partage, favoris et rappel
 
 « Partager le PDF » ouvre le menu du téléphone lorsque le navigateur prend en charge le partage de fichiers. Si une nouvelle action est nécessaire après la préparation, le bouton indique « Partager le PDF prêt ». L’annulation ne marque jamais une semaine envoyée. Si le partage natif est indisponible, le PDF est téléchargé pour être joint manuellement au mail.
@@ -56,11 +70,11 @@ Choisir une semaine (la date est ramenée au lundi), puis un jour. Ajouter jusqu
 - « À l’entreprise » affiche seulement le TPE : trajet et autres catégories sont à zéro. La ligne exportée s’appelle **Atelier ASC**.
 - « Journée à l’atelier — 8 h » crée directement une ligne Atelier ASC de 480 minutes de TPE. Si la journée est remplie, un remplacement doit être confirmé.
 - Les clients des interventions antérieures sont proposés dans le champ Client ; leur sélection préremplit la dernière localité utilisée. La localité reste modifiable. Aucun carnet séparé n’est nécessaire.
-- « Congé » et « Arrêt maladie » permettent de choisir un jour, la semaine affichée ou une période future (366 jours maximum). Les samedis et dimanches sont exclus par défaut, avec une option pour les inclure. Ces absences remplacent les journées choisies après confirmation si elles contiennent des interventions. Le PDF et l’ODS affichent le motif « Congé » ou « Arrêt maladie », sans heures travaillées ni supplémentaires. Supprimer la ligne d’absence permet de reprendre une saisie normale.
+- « Congé » et « Arrêt maladie » permettent de choisir un jour, la semaine affichée ou une période future (366 jours maximum). Pour les congés, le samedi est compté et le dimanche exclu : une semaine complète vaut 6 jours. Si la période se termine un vendredi, le samedi suivant est inclus. Les récupérations se posent uniquement du lundi au vendredi. Les week-ends restent optionnels pour la période d’arrêt maladie, selon les dates du certificat. Ces absences remplacent les journées choisies après confirmation si elles contiennent des interventions. Le PDF et l’ODS affichent le motif « Congé » ou « Arrêt maladie », sans heures travaillées ni supplémentaires. Supprimer la ligne d’absence permet de reprendre une saisie normale.
 - « Copier une journée » permet de choisir une semaine et un jour, puis de copier toutes ses lignes dans le jour sélectionné. Une journée déjà remplie n’est remplacée qu’après confirmation. La copie est indépendante de l’original.
 - L’historique liste les semaines non vides et leur total. Sélectionner une semaine permet de la revoir, la modifier ou télécharger à nouveau son PDF.
 
-Les trajets aller-retour sont saisis en minutes. Les autres durées acceptent `2h30`, `2:30` ou `2h` ; un nombre entier seul signifie des heures. Total = trajet + TPE + régie + chantier + SAV. Heures supplémentaires = maximum de zéro et total journalier moins 8 h ; elles ne sont pas ajoutées une seconde fois au total.
+Les trajets aller-retour sont saisis en minutes. Les autres durées acceptent `2h30`, `2:30` ou `2h` ; un nombre entier seul signifie des heures. Total = trajet + TPE + régie + chantier + SAV. Heures supplémentaires = maximum de zéro et total hebdomadaire moins 35 h ; elles ne sont pas ajoutées une seconde fois au total.
 
 ## Couleurs de l’application
 
