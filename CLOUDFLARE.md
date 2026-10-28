@@ -62,7 +62,7 @@ Ouvrir le lien `workers.dev` fourni par Cloudflare. Le premier écran affiche «
 
 L’installation est automatiquement désactivée après la création de l’espace ; un tiers ne peut pas la relancer pour changer le code. Le secret `SETUP_TOKEN` peut ensuite être supprimé des paramètres Cloudflare : il n’est plus utilisé pour les connexions.
 
-Ouvrir la **même adresse** sur le téléphone et l’ordinateur, puis utiliser le même code. Ajouter le lien à l’écran d’accueil depuis Safari ou Chrome. Cette version ne promet pas de fonctionnement hors connexion ; il ne s’agit pas d’une application installée depuis un store.
+Ouvrir la **même adresse** sur le téléphone et l’ordinateur, puis utiliser le même code. Ajouter le lien à l’écran d’accueil depuis Safari ou Chrome. Après une première connexion en ligne sur cet appareil et la préparation du cache, la saisie peut se poursuivre hors connexion. La copie locale est chiffrée et les modifications se synchronisent au retour du réseau. Le stockage du navigateur doit être disponible ; il ne s’agit pas d’une application installée depuis un store.
 
 ### 6. Retrouver ses anciennes semaines
 
@@ -105,7 +105,7 @@ Pour l’installation locale uniquement, mettre une clé d’installation dans `
 npm run test:browser
 ```
 
-Ce test demande Python, Playwright, Chromium et PyMuPDF sur la machine de développement ; ces outils ne sont pas nécessaires en production ni pour générer le PDF sur téléphone. Il vérifie l’installation initiale, les connexions de deux appareils, le stockage D1, les exports navigateur et le contenu du PDF (atelier, client, congé, maladie, totaux et heures supplémentaires).
+Ce test demande Python, Playwright, Chromium et PyMuPDF sur la machine de développement ; ces outils ne sont pas nécessaires en production ni pour générer le PDF sur téléphone. Il vérifie les trois écrans, le bilan et le bloc-notes, les favoris, les statuts, le rappel calendrier, le partage, l’installation initiale, les connexions de deux appareils, la fermeture puis la réouverture hors connexion, la fusion au retour du réseau, le stockage D1, les exports navigateur et le contenu du PDF (atelier, client, congé, maladie, totaux et heures supplémentaires).
 
 Vérification de compilation sans publication : `npx wrangler deploy --dry-run`. Les tests locaux et le dry run ne constituent pas une validation sur un vrai compte Cloudflare.
 

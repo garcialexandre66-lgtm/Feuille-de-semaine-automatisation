@@ -1,11 +1,13 @@
+import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { readFile, mkdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { resolve, extname } from 'node:path';
 const setupToken=crypto.randomUUID()+crypto.randomUUID();
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.pdf':'application/pdf','.ttf':'font/ttf','.ods':'application/vnd.oasis.opendocument.spreadsheet'};
+const bundled=await build({entryPoints:['cloudflare/worker.mjs'],bundle:true,format:'esm',write:false});
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.pdf':'application/pdf','.ttf':'font/ttf','.ods':'application/vnd.oasis.opendocument.spreadsheet','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
 const mf=new Miniflare(convertV4MiniflareOptions({
- modules:true,scriptPath:'cloudflare/worker.mjs',compatibilityDate:'2026-10-28',d1Databases:['DB'],bindings:{SETUP_TOKEN:setupToken},
+ modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-10-28',d1Databases:['DB'],bindings:{SETUP_TOKEN:setupToken},
  serviceBindings:{ASSETS:async request=>{
   const path=new URL(request.url).pathname;
   const file=resolve('dist','.'+(path==='/'?'/index.html':path));

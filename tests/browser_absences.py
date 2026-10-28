@@ -24,11 +24,14 @@ with tempfile.TemporaryDirectory() as folder:
             page.locator('#access-code').fill('test-only-password')
             page.get_by_role('button',name='Ouvrir mes semaines').click()
             page.locator('#application').wait_for(state='visible')
+            page.locator('#settings-open').click()
             page.locator('#name').fill('Test absences')
-            page.locator('#week').fill('2027-01-04')
+            page.locator('#settings-close').click()
+            page.locator('#day-picker').fill('2027-01-04')
             page.locator('#days button').first.click()
             page.locator('#workshop-day').click()
             # Pas de suppression si on refuse de remplacer une journée travaillée.
+            page.locator('.day-more').evaluate('(d)=>d.open=true')
             page.locator('#leave').click()
             page.locator('#leave-week').click()
             page.once('dialog',lambda d:d.dismiss())
@@ -42,15 +45,17 @@ with tempfile.TemporaryDirectory() as folder:
             assert page.locator('#add').is_disabled()
             assert page.locator('#total').inner_text()=='0 h 00'
             # Une période future traverse deux semaines, week-ends ignorés.
+            page.locator('.day-more').evaluate('(d)=>d.open=true')
             page.locator('#leave').click()
             page.locator('#leave-start').fill('2027-02-01')
             page.locator('#leave-end').fill('2027-02-12')
             page.locator('#leave-form button.primary').click()
-            assert page.locator('#week').input_value()=='2027-02-01'
-            page.locator('#week').fill('2027-02-08')
+            assert page.locator('#day-picker').input_value()=='2027-02-01'
+            page.locator('#day-picker').fill('2027-02-08')
             assert page.locator('#days button span').all_inner_texts()==['Congé']*5+['0 h 00']*2
             # Arrêt maladie sur la semaine entière, incluant les week-ends.
-            page.locator('#week').fill('2027-03-01')
+            page.locator('#day-picker').fill('2027-03-01')
+            page.locator('.day-more').evaluate('(d)=>d.open=true')
             page.locator('#sick').click()
             page.locator('#leave-week').click()
             page.locator('#leave-weekend').check()
@@ -58,15 +63,17 @@ with tempfile.TemporaryDirectory() as folder:
             assert page.locator('#days button span').all_inner_texts()==['Arrêt maladie']*7
             assert page.locator('#overtime').inner_text()=='0 h 00'
             # Deux motifs dans la même semaine sur des dates distinctes.
-            page.locator('#week').fill('2027-01-04')
+            page.locator('#day-picker').fill('2027-01-04')
             page.locator('#days button').last.click()
+            page.locator('.day-more').evaluate('(d)=>d.open=true')
             page.locator('#sick').click()
             page.locator('#leave-form button.primary').click()
             page.wait_for_function("() => document.querySelector('#sync-status').textContent==='✓ Semaines synchronisées'")
             page.reload();page.locator('#application').wait_for(state='visible')
-            page.locator('#week').fill('2027-01-04')
+            page.locator('#day-picker').fill('2027-01-04')
             page.locator('#days button').last.click()
             assert page.locator('#dayremaining').inner_text()=='Arrêt maladie'
+            page.locator('#app-tabs [data-view=weeks]').click()
             with page.expect_download(timeout=90000) as event:
                 page.locator('#export').click()
             pdf=Path(folder)/'absences.pdf';event.value.save_as(pdf)
@@ -76,7 +83,9 @@ with tempfile.TemporaryDirectory() as folder:
             # Aucun des motifs ne devient un client mémorisé.
             assert not page.locator('#remembered-clients option').count()
             page.screenshot(path='apercus/conges-maladie.png',full_page=True)
+            page.locator('#app-tabs [data-view=day]').click()
             # Une période inversée ne modifie pas la feuille.
+            page.locator('.day-more').evaluate('(d)=>d.open=true')
             page.locator('#leave').click()
             page.locator('#leave-start').fill('2027-04-10')
             page.locator('#leave-end').fill('2027-04-01')

@@ -24,7 +24,7 @@ function checkStore(s){
    if(daySum(day)>1440)throw Error('Une journée dépasse 24 heures.');
   }
  }
- return s;
+ return Timesheet.extras(s);
 }
 function days(){if(!Object.hasOwn(store.weeks,week))store.weeks[week]=Array.from({length:7},()=>[]);return store.weeks[week];}
 function save(){syncSave();}
@@ -36,17 +36,18 @@ function render(){
  const date=new Date(week+'T12:00:00');date.setDate(date.getDate()+selected);
  $('daydate').textContent=date.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});$('daytitle').textContent=names[selected];$('daytotal').textContent=fmt(totals[selected]);
  const onLeave=ds[selected].some(item=>isAbsence(item));
- $('dayremaining').textContent=onLeave?ds[selected][0].client:totals[selected]>480?`${fmt(totals[selected]-480)} supplémentaires`:`${fmt(480-totals[selected])} pour atteindre 8 h`;
+ $('dayremaining').textContent=onLeave?ds[selected][0].client:totals[selected]===480?'Objectif de 8 h atteint':totals[selected]>480?`${fmt(totals[selected]-480)} supplémentaires`:`${fmt(480-totals[selected])} pour atteindre 8 h`;
  $('progress').style.width=`${Math.min(totals[selected]/480*100,100)}%`;
  $('entries').replaceChildren();
  ds[selected].forEach((item,i)=>{const el=node('article',null,'entry'), info=node('div');el.dataset.kind=item.kind||item.workplace||'client';info.append(node('h3',item.client||'Temps pour l’entreprise'));if(item.city)info.append(node('p',item.city));info.append(node('p',fields.flatMap((k,j)=>item[k]?[`${labels[j]} : ${fmt(item[k])}`]:[]).join(' · ')));const actions=node('div',null,'actions');actions.append(node('strong',fmt(sum(item))));const edit=node('button','Modifier');edit.onclick=()=>openEditor(i);const remove=node('button','Supprimer');remove.onclick=()=>{if(confirm('Supprimer cette intervention ?')){ds[selected].splice(i,1);save();render();}};if(!isAbsence(item))actions.append(edit);actions.append(remove);el.append(info,actions);$('entries').append(el);});
  if(!ds[selected].length){const empty=node('div',null,'empty');empty.append(node('b','Une journée à remplir'),node('div','Ajoutez un chantier, un déplacement ou du temps au dépôt.'));$('entries').append(empty);}
  $('add').disabled=onLeave||ds[selected].length>=8;
- $('add').textContent=onLeave?'Retirez l’absence pour ajouter une intervention':'+ Ajouter une intervention ou du TPE';
+ $('add').textContent=onLeave?'Retirez l’absence pour ajouter une intervention':'+ Ajouter mon travail';
  $('previous-day').disabled=selected===0; $('next-day').disabled=selected===6;
  $('next-day').textContent=selected<6?`Passer à ${names[selected+1].toLowerCase()} →`:'Fin de la semaine';
+ renderWorkspace();
 }
-function openEditor(index=-1){editing=index;$('form').reset();$('error').textContent='';$('editor-title').textContent=index<0?'Nouvelle intervention':'Modifier l’intervention';if(index>=0){const item=days()[selected][index];$('workplace').value=item.workplace==='atelier'?'atelier':'client';for(const k of ['client','city',...fields])$('form').elements[k].value=fields.includes(k)&&k!=='travel'?fmt(item[k]):item[k];}updateWorkplace();step=0;$('wizard-day').textContent=names[selected]+' · '+$('daydate').textContent;showStep();rememberClients();$('editor').showModal();}
+function openEditor(index=-1){editing=index;$('form').reset();$('error').textContent='';$('editor-title').textContent=index<0?'Nouvelle intervention':'Modifier l’intervention';if(index>=0){const item=days()[selected][index];$('workplace').value=item.workplace==='atelier'?'atelier':'client';for(const k of ['client','city',...fields])$('form').elements[k].value=fields.includes(k)&&k!=='travel'?fmt(item[k]):item[k];}updateWorkplace();step=0;$('wizard-day').textContent=names[selected]+' · '+$('daydate').textContent;showStep();rememberClients();renderFavoriteChoices();$('editor').showModal();}
 function parseDuration(text){const s=text.trim().toLowerCase();let m=s.match(/^(\d+)\s*(?:h|:)\s*(\d{1,2})?$/);if(m){if(Number(m[2]||0)>59)throw Error('Les minutes doivent être entre 0 et 59.');return Number(m[1])*60+Number(m[2]||0);}if(/^\d+$/.test(s))return Number(s)*60;throw Error('Saisissez une durée comme 2h30, 2:30 ou 2h.');}
 $('add').onclick=()=>openEditor();$('cancel').onclick=()=>$('editor').close();
 function isWorkshop(){return $('workplace').value==='atelier';}
@@ -76,6 +77,7 @@ function showStep(){
  document.querySelectorAll('.steps li').forEach((p,i)=>{p.hidden=!stepOrder().includes(i);p.classList.toggle('current',i===step);if(i===step)p.setAttribute('aria-current','step');else p.removeAttribute('aria-current');});
  $('step-count').textContent=`Étape ${stepOrder().indexOf(step)+1} sur ${stepOrder().length}`;$('previous').disabled=step===0;
  $('next').textContent=step===3?'Enregistrer cette ligne':'Suivant →';$('error').textContent='';
+ $('remember-favorite-label').hidden=isWorkshop();
  if(step===3){const {item,day}=readItem();$('recap').replaceChildren();
   $('recap').append(node('h4',item.client||'Temps pour l’entreprise'),node('p',item.city));
   fields.forEach((k,i)=>{if(item[k])$('recap').append(node('p',`${labels[i]} : ${fmt(item[k])}`));});
@@ -93,19 +95,25 @@ $('form').onsubmit=e=>{e.preventDefault();try{
   if(fields.includes(input.name)&&input.name!=='travel'){const n=parseDuration(input.value);if(n<0||n>1440)throw Error('Une durée ne peut pas dépasser 24 heures.');}
  }
  if(step<3){const next=stepOrder()[stepOrder().indexOf(step)+1];if(next===3)readItem();step=next;showStep();return;}
- const {day}=readItem();store.weeks[week][selected]=day;save();render();$('editor').close();
+ const {item,day}=readItem();if($('remember-favorite').checked&&!isWorkshop())rememberFavoriteItem(item);store.weeks[week][selected]=day;save();render();$('editor').close();
 }catch(err){$('error').textContent=err.message;}};
-$('name').oninput=()=>{store.name=$('name').value;save();};
+$('name').oninput=()=>{store.name=$('name').value;save();renderWorkspace();renderHistory();};
 $('week').onchange=()=>{if(!$('week').value)return;week=monday($('week').value);render();};
 function download(blob,name){const a=node('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('backup').onclick=()=>download(new Blob([JSON.stringify(store,null,2)],{type:'application/json'}),'mes-semaines-asc.json');
-$('restore').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{if(f.size>5_000_000)throw Error('Fichier trop volumineux.');const incoming=checkStore(JSON.parse(await f.text()));if(confirm('Importer cette sauvegarde ? Les semaines présentes dans le fichier remplaceront les mêmes semaines sur cet appareil.')){store={name:incoming.name||store.name,weeks:{...store.weeks,...incoming.weeks}};save();render();}}catch(err){$('status').textContent='Import impossible : '+err.message;}$('file').value='';};
-async function exportWeek(pdf=true){if(!store.name.trim()){$('status').textContent='Indiquez votre nom avant d’exporter.';$('name').focus();return;}const button=$(pdf?'export':'export-ods');button.disabled=true;try{
- const payload={name:store.name,week,days:days()};let blob;
- if(window.ASC_CLOUDFLARE){const exporter=await import('/cloud-export.js');blob=await (pdf?exporter.createPdf(payload):exporter.createOds(payload));}
- else{const res=await fetch(pdf?'/export/pdf':'/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!res.ok)throw Error(await res.text());blob=await res.blob();}
- download(blob,`feuille-semaine-${week}.${pdf?'pdf':'ods'}`);
- $('status').textContent=pdf?'✓ PDF téléchargé. Joignez-le à votre mail à la secrétaire.':'✓ Feuille ODS exportée.';}catch(err){$('status').textContent='Export impossible : '+err.message;}finally{button.disabled=false;}};
+$('restore').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{if(f.size>5_000_000)throw Error('Fichier trop volumineux.');const incoming=checkStore(JSON.parse(await f.text()));if(confirm('Importer cette sauvegarde ? Les semaines présentes dans le fichier remplaceront les mêmes semaines sur cet appareil.')){store=mergeImported(store,incoming);save();render();}}catch(err){$('status').textContent='Import impossible : '+err.message;}$('file').value='';};
+async function weekBlob(pdf=true){
+ const payload={name:store.name,week,days:days()};
+ if(window.ASC_CLOUDFLARE){const exporter=await import('/cloud-export.js');return pdf?exporter.createPdf(payload):exporter.createOds(payload);}
+ const res=await fetch(pdf?'/export/pdf':'/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!res.ok)throw Error(await res.text());return res.blob();
+}
+async function exportWeek(pdf=true){
+ if(!store.name.trim()){$('status').textContent='Indiquez votre nom dans les réglages avant d’exporter.';openSettings();$('name').focus();return;}
+ const button=$(pdf?'export':'export-ods');button.disabled=true;
+ try{download(await weekBlob(pdf),`feuille-semaine-${week}.${pdf?'pdf':'ods'}`);$('status').textContent=pdf?'PDF téléchargé. Vous pourrez le joindre à votre mail.':'Fichier ODS téléchargé.';}
+ catch(err){$('status').textContent='Export impossible : '+err.message;}
+ finally{button.disabled=false;}
+}
 $('export').onclick=()=>exportWeek(true);
 $('export-ods').onclick=()=>exportWeek(false);
 
@@ -122,7 +130,7 @@ function renderHistory(){
  const keys=Object.keys(store.weeks).filter(k=>store.weeks[k].some(day=>day.length)).sort().reverse();
  $('history-list').replaceChildren();
  if(!keys.length)$('history-list').append(node('p','Vos semaines enregistrées apparaîtront ici.'));
- for(const key of keys){const b=node('button',`${new Date(key+'T12:00:00').toLocaleDateString('fr-FR')} · ${fmt(store.weeks[key].reduce((n,d)=>n+daySum(d),0))}`);b.onclick=()=>{week=key;render();$('week').focus();};$('history-list').append(b);}
+ for(const key of keys){const b=node('button',`${new Date(key+'T12:00:00').toLocaleDateString('fr-FR')} · ${fmt(store.weeks[key].reduce((n,d)=>n+daySum(d),0))} · ${Timesheet.sentStatus(store,key)}`);b.onclick=()=>{week=key;setView('weeks');render();$('week').focus();};$('history-list').append(b);}
 }
 $('workshop-day').onclick=()=>{
  if(days()[selected].length&&!confirm('Remplacer les interventions de cette journée par 8 h à l’atelier ?'))return;

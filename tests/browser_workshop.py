@@ -23,12 +23,14 @@ try:
         page.locator('#access-code').fill('test-only-password')
         page.get_by_role('button',name='Ouvrir mes semaines').click()
         page.locator('#application').wait_for(state='visible')
+        page.locator('#settings-open').click()
         page.locator('#name').fill('Test atelier')
+        page.locator('#settings-close').click()
         page.locator('#add').click()
         page.locator('#workplace').select_option('atelier')
-        assert not page.locator('[name=client]').is_visible()
+        assert not page.locator('#form [name=client]').is_visible()
         page.locator('#next').click()
-        assert not page.locator('[name=travel]').is_visible()
+        assert not page.locator('#form [name=travel]').is_visible()
         page.locator('[name=tpe]').fill('8h')
         page.locator('#next').click()
         assert page.locator('#step-count').inner_text() == 'Étape 3 sur 3'
@@ -39,6 +41,7 @@ try:
         page.get_by_role('button',name='Modifier',exact=True).click()
         assert page.locator('#workplace').input_value() == 'atelier'
         page.locator('#cancel').click()
+        page.locator('#app-tabs [data-view=weeks]').click()
         with page.expect_download() as event:
             page.locator('#export').click()
         with tempfile.TemporaryDirectory() as folder:

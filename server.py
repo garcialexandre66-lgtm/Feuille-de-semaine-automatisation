@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import re
 import zipfile
 from http.cookies import SimpleCookie
 import storage
@@ -47,6 +48,34 @@ def validate(data):
         if total > 1440:
             raise ValueError('Une journée ne peut pas dépasser 24 heures.')
     return start
+
+
+def validate_extras(state):
+    for name in ('weekMeta', 'monthNotes', 'preferences'):
+        if not isinstance(state.get(name, {}), dict):
+            raise ValueError('Réglages invalides.')
+    if len(state.get('monthNotes', {})) > 1200:
+        raise ValueError('Trop de notes mensuelles.')
+    for key, value in state.get('monthNotes', {}).items():
+        if not re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])', key) or not isinstance(value, str) or len(value) > 10000:
+            raise ValueError('Note mensuelle invalide.')
+    for key, value in state.get('weekMeta', {}).items():
+        date.fromisoformat(key)
+        if not isinstance(value, dict) or not isinstance(value.get('sentAt'), str) or not isinstance(value.get('signature'), str) or not re.fullmatch(r'[a-f0-9]{8}', value['signature']):
+            raise ValueError('Statut de semaine invalide.')
+    favorites = state.get('favorites', [])
+    if not isinstance(favorites, list) or len(favorites) > 100:
+        raise ValueError('Favoris invalides.')
+    ids = set()
+    for item in favorites:
+        if not isinstance(item, dict) or not isinstance(item.get('id'), str) or not 1 <= len(item['id']) <= 100 or item['id'] in ids:
+            raise ValueError('Favori invalide.')
+        ids.add(item['id'])
+        if not isinstance(item.get('client'), str) or not item['client'].strip() or len(item['client']) > 200 or not isinstance(item.get('city'), str) or len(item['city']) > 200 or type(item.get('travel')) is not int or not 0 <= item['travel'] <= 1440:
+            raise ValueError('Favori invalide.')
+    reminder = state.get('preferences', {}).get('fridayReminder', True)
+    if type(reminder) is not bool:
+        raise ValueError('Rappel invalide.')
 
 
 def duration(minutes):
@@ -245,6 +274,7 @@ class Handler(SimpleHTTPRequestHandler):
                     raise ValueError('Historique invalide (1000 semaines maximum).')
                 for week, days in state['weeks'].items():
                     validate({'name':state['name'] or 'Technicien', 'week':week, 'days':days})
+                validate_extras(state)
                 revision = data['revision']
                 if type(revision) is not int or revision < 0:
                     raise ValueError('Révision invalide.')

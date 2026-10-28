@@ -42,7 +42,9 @@ def run():
                 def synced(page):
                     page.wait_for_function("() => document.querySelector('#sync-status').textContent==='✓ Semaines synchronisées'")
                 login(one)
+                one.locator('#settings-open').click()
                 one.locator('#name').fill('Test technicien')
+                one.locator('#settings-close').click()
                 one.locator('#days button').first.click()
                 one.locator('#workshop-day').click()
                 synced(one)
@@ -50,11 +52,20 @@ def run():
                 assert one.locator('#entries').inner_text().count('Atelier ASC')==1
                 login(two)
                 initial=two.evaluate("async () => (await fetch('/api/state')).json()")
-                two.route('**/api/state',lambda route: route.fulfill(json=initial) if route.request.method=='GET' else route.continue_())
+                remote_allowed=False
+                def stale_until_write(route):
+                    nonlocal remote_allowed
+                    if route.request.method=='POST':
+                        remote_allowed=True
+                        route.continue_()
+                    elif remote_allowed:route.continue_()
+                    else:route.fulfill(json=initial)
+                two.route('**/api/state',stale_until_write)
                 two.locator('#days button').first.click()
                 assert two.locator('#daytotal').inner_text()=='8 h 00'
                 # Copie par valeur : supprimer sur la copie ne change pas la source.
                 one.locator('#next-day').click()
+                one.locator('.day-more').evaluate('(d)=>d.open=true')
                 one.locator('#copy-day').click()
                 one.locator('#copy-form button.primary').click()
                 assert one.locator('#daytotal').inner_text()=='8 h 00'
@@ -66,22 +77,22 @@ def run():
                 # Client mémorisé et historique.
                 one.locator('#next-day').click()
                 one.locator('#add').click()
-                one.locator('[name=client]').fill('Client mémorisé')
-                one.locator('[name=city]').fill('Perpignan')
+                one.locator('#form [name=client]').fill('Client mémorisé')
+                one.locator('#form [name=city]').fill('Perpignan')
                 one.locator('#next').click();one.locator('#next').click()
                 one.locator('[name=chantier]').fill('2h30')
                 one.locator('#next').click();one.locator('#next').click()
                 synced(one)
                 one.locator('#add').click()
-                one.locator('[name=client]').fill('Client mémorisé')
-                one.locator('[name=city]').focus()
-                assert one.locator('[name=city]').input_value()=='Perpignan'
+                one.locator('#form [name=client]').fill('Client mémorisé')
+                one.locator('#form [name=city]').focus()
+                assert one.locator('#form [name=city]').input_value()=='Perpignan'
                 one.locator('#cancel').click()
-                one.locator('#week').fill('2026-10-19')
+                one.locator('#day-picker').fill('2026-10-19')
                 one.locator('#workshop-day').click()
                 synced(one)
                 assert one.locator('#history-list button').count()==2
-                one.locator('.history summary').click()
+                one.locator('#app-tabs [data-view=weeks]').click()
                 one.locator('#history-list button').first.click()
                 assert one.locator('#week').input_value()!='2026-10-19'
                 # B conserve une révision ancienne : le serveur refuse l’écrasement.
@@ -96,6 +107,7 @@ def run():
                 synced(two)
                 # Récupération après rechargement et fermeture de session.
                 two.reload();two.locator('#application').wait_for(state='visible')
+                two.locator('#settings-open').click()
                 two.locator('#logout').click()
                 two.locator('#login-panel').wait_for(state='visible')
                 assert two.locator('#application').is_hidden()

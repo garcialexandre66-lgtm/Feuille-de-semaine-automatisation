@@ -1,3 +1,4 @@
+import '../static/domain.js';
 const encoder=new TextEncoder();
 const hex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 const unhex=s=>Uint8Array.from(s.match(/../g),v=>parseInt(v,16));
@@ -34,6 +35,7 @@ export function validateStore(store){
    if(day.some(i=>['leave','sick'].includes(i.kind))&&(day.length!==1||total!==0||day[0].client!=={leave:'Congé',sick:'Arrêt maladie'}[day[0].kind]))throw Error('Une absence doit être seule et sans heures travaillées.');
   }
  }
+ globalThis.Timesheet.extras(store);
  if(encoder.encode(JSON.stringify(store)).length>1500000)throw Error('Archive trop volumineuse. Téléchargez une sauvegarde et contactez le responsable de l’application.');
  return store;
 }

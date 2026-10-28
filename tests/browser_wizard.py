@@ -21,15 +21,15 @@ with sync_playwright() as p:
  page.locator('#days button').first.click()
  assert page.locator('#previous-day').is_disabled()
  page.locator('#add').click()
- page.locator('[name=client]').fill('Client exemple')
- page.locator('[name=city]').fill('Saint-Estève')
+ page.locator('#form [name=client]').fill('Client exemple')
+ page.locator('#form [name=city]').fill('Saint-Estève')
  page.locator('#next').click()
- page.locator('[name=travel]').fill('60')
+ page.locator('#form [name=travel]').fill('60')
  page.locator('[name=tpe]').fill('1h')
  page.locator('#previous').click()
- assert page.locator('[name=client]').input_value()=='Client exemple'
+ assert page.locator('#form [name=client]').input_value()=='Client exemple'
  page.locator('#next').click()
- assert page.locator('[name=travel]').input_value()=='60'
+ assert page.locator('#form [name=travel]').input_value()=='60'
  page.locator('#next').click()
  page.locator('[name=chantier]').fill('6h90')
  page.locator('#next').click()

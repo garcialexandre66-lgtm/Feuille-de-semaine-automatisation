@@ -19,13 +19,35 @@ Port 8000, adresse locale par défaut. Pour un accès réseau privé : `HOST=0.0
 
 Le serveur Python reste nécessaire : Cloudflare Pages seul ne peut pas exécuter cette version Python ni LibreOffice. Cloudflare peut servir de proxy HTTPS vers un hébergement Python compatible et persistant ; la version Workers/D1 livrée dans ce dépôt est décrite dans CLOUDFLARE.md. La mise en ligne n’est pas incluse dans ces changements.
 
+## Une application en trois écrans
+
+- **Ma journée** : choisir la date, ajouter son travail ou remplir 8 h à l’atelier. Congés, maladie et copie restent accessibles dans « Congé, maladie ou copie d’une journée ».
+- **Mes semaines** : choisir une semaine, partager ou télécharger le PDF et renseigner « Envoyée ». L’historique présente aussi le statut. Une correction du nom ou des lignes transforme automatiquement « Envoyée » en « À renvoyer ». Aucun mail n’est envoyé par le bouton de statut.
+- **Mon bilan** : heures travaillées et supplémentaires du mois, jours de congé et de maladie séparés. Seules les journées qui appartiennent au mois sont comptées, y compris si une semaine commence le mois précédent. Le bloc-notes présente automatiquement le détail quotidien des heures supplémentaires ; les notes personnelles sont modifiables et synchronisées. Une exportation texte permet de conserver le bilan.
+
+Le nom, les favoris, les couleurs, les sauvegardes, le rappel et le verrouillage sont regroupés dans **Réglages**.
+
 ## Espace personnel et synchronisation
 
-Sur chaque appareil, ouvrir la même adresse et utiliser le même code. Il s’agit d’un espace personnel unique, pas d’un service multiutilisateur. Les semaines sont conservées dans SQLite dans `data/asc.sqlite3` (ou `ASC_DATA_DIR`). Sauvegarder ce répertoire sur l’hébergement ; ne pas le publier dans Git. Le code est conservé sous forme de dérivé scrypt salé. Les sessions sont des cookies HttpOnly, SameSite=Strict, Secure par défaut, valables 24 heures. Dix tentatives incorrectes dans une fenêtre de 15 minutes bloquent temporairement les tentatives de cette adresse réseau. Le bouton Verrouiller ferme la session de cet appareil.
+Sur chaque appareil, ouvrir la même adresse et utiliser le même code. Il s’agit d’un espace personnel unique. La version Python conserve les données dans SQLite dans `data/asc.sqlite3` (ou `ASC_DATA_DIR`), la version Cloudflare dans D1. Les données et secrets ne doivent pas être publiés dans Git. Les sessions utilisent des cookies HttpOnly et SameSite=Strict, Secure par défaut, valables 24 heures ; les codes ne sont pas conservés en clair.
 
-Les modifications sont envoyées automatiquement après une courte pause. Les autres appareils relisent le serveur toutes les 15 secondes, au retour sur l’onglet ou avec Synchroniser. La lecture est suspendue pendant un formulaire ouvert ou la saisie du nom. Un numéro de révision empêche l’écrasement silencieux des modifications d’un autre appareil. En cas de conflit, sauvegarder sa version JSON puis choisir explicitement la version du serveur ou remplacer celle-ci. Il n’y a pas de fusion automatique entre deux modifications concurrentes.
+Les modifications sont envoyées automatiquement. Les autres appareils relisent le serveur toutes les 15 secondes, au retour sur l’onglet ou avec Synchroniser. Les journées distinctes modifiées sur deux appareils sont réunies automatiquement ; les notes, favoris et statuts sont également conservés lorsqu’ils ne se contredisent pas. Si la même journée ou la même note est modifiée différemment, un choix explicite est demandé sans écrasement silencieux. Une sauvegarde JSON est disponible avant ce choix.
 
-Les modifications non synchronisées restent en mémoire : garder l’onglet ouvert ou télécharger une sauvegarde en cas de coupure réseau. Elles ne survivent pas à la fermeture de l’onglet. Aucune nouvelle donnée personnelle n’est mise en cache dans localStorage. Les anciennes données locales restent accessibles via « Importer les semaines de cet ancien navigateur » après connexion ; l’import est explicite. Les fichiers JSON contiennent les semaines en clair : les conserver dans un endroit privé.
+## Hors connexion
+
+Dans la version Cloudflare, se connecter une première fois en HTTPS, avec Internet, sur chaque appareil. L’application prépare ses fichiers avec un service worker. Les réponses de l’API et les données personnelles ne sont jamais placées dans son cache. Les données et modifications en attente sont sauvegardées dans IndexedDB, chiffrées avec AES-GCM. La clé locale est dérivée du code avec PBKDF2-SHA256 (100 000 itérations et sel local distinct). Une clé de session reste dans sessionStorage pour éviter de redemander le code à chaque actualisation du même onglet ; le verrouillage la supprime.
+
+Il est ensuite possible de fermer puis rouvrir sans réseau, saisir des journées, consulter le bilan et générer PDF/ODS. Dans un nouvel onglet hors ligne, le code personnel déverrouille les données locales. Les modifications sont synchronisées automatiquement au retour du réseau ; si la session serveur a expiré, le code est redemandé. Un changement du code serveur ne peut pas effacer à distance une copie hors ligne déjà téléchargée.
+
+Le mode hors connexion dépend des capacités et du stockage du navigateur. Un navigateur privé, l’effacement des données ou l’éviction du stockage par le système peuvent supprimer la copie locale. Conserver des sauvegardes JSON ; ces fichiers sont en clair et doivent rester privés. La version Python profite aussi du stockage local chiffré mais ne prépare pas son interface pour une réouverture sans réseau.
+
+## Partage, favoris et rappel
+
+« Partager le PDF » ouvre le menu du téléphone lorsque le navigateur prend en charge le partage de fichiers. Si une nouvelle action est nécessaire après la préparation, le bouton indique « Partager le PDF prêt ». L’annulation ne marque jamais une semaine envoyée. Si le partage natif est indisponible, le PDF est téléchargé pour être joint manuellement au mail.
+
+Un favori mémorise un client, une localité et le trajet aller-retour en minutes. Il peut être créé depuis Réglages ou à la dernière étape d’une intervention ; il préremplit la saisie sans recopier les heures du chantier.
+
+Le vendredi, un rappel dans l’application apparaît pour la semaine courante non envoyée. Pour un rappel même application fermée, « Ajouter aussi le rappel au calendrier du téléphone » télécharge un événement récurrent chaque vendredi à 17 h, heure de Paris, avec alarme. Il faut importer et accepter cet événement dans un calendrier compatible, une seule fois. Aucune notification push automatique n’est promise lorsque l’application est fermée.
 
 ## Saisie
 
