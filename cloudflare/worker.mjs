@@ -1,4 +1,5 @@
 import '../static/domain.js';
+import { deliveryInfo,saveDelivery,startGoogle,finishGoogle,scheduledDelivery } from './delivery.mjs';
 const encoder=new TextEncoder();
 const hex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 const unhex=s=>Uint8Array.from(s.match(/../g),v=>parseInt(v,16));
@@ -30,6 +31,7 @@ export function validateStore(store){
    for(const item of day){
     if(!item||typeof item.client!=='string'||typeof item.city!=='string'||item.client.length>200||item.city.length>200)throw Error('Client ou localité invalide.');
     for(const key of ['travel','tpe','regie','chantier','sav']){if(!Number.isInteger(item[key])||item[key]<0||item[key]>1440)throw Error('Durée invalide.');total+=item[key];}
+    for(const key of ['prep','intervention'])if(item[key]!==undefined&&(typeof item[key]!=='string'||item[key].length>80))throw Error('Numéro de bon invalide.');
    }
    if(total>1440)throw Error('Une journée ne peut pas dépasser 24 heures.');
    if(day.some(i=>['leave','sick','recovery'].includes(i.kind))&&(day.length!==1||total!==0||day[0].client!=={leave:'Congé',sick:'Arrêt maladie',recovery:'Récupération'}[day[0].kind]))throw Error('Une absence doit être seule et sans heures travaillées.');
@@ -49,6 +51,13 @@ async function body(request){
 async function api(request,env,url){
  const path=url.pathname;
  if(!env.DB)return json(503,{error:'La base D1 doit être reliée à l’application.'});
+ if(request.method==='GET'&&path==='/api/google/callback'){
+  try{return await finishGoogle(request,env);}catch(error){return json(400,{error:error.message});}
+ }
+ if(request.method==='GET'&&path==='/api/delivery'){
+  if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour régler les envois.'});
+  return json(200,await deliveryInfo(env));
+ }
  if(request.method==='GET'&&path==='/api/session'){const account=await env.DB.prepare('SELECT salt FROM account WHERE id=1').first();return json(200,{deployment:'cloudflare',configured:!!account,salt:account?.salt,authenticated:await authenticated(request,env)});}
  if(request.method==='GET'&&path==='/api/state'){
   if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour retrouver vos semaines.'});
@@ -83,6 +92,12 @@ async function api(request,env,url){
   return json(200,{ok:true},`asc_session=${session}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400`);
  }
  if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour continuer.'});
+ if(path==='/api/google/start'){
+  try{const result=await startGoogle(env,token(request));return json(200,{url:result.url},result.cookie);}catch(error){return json(400,{error:error.message});}
+ }
+ if(path==='/api/delivery'){
+  try{return json(200,await saveDelivery(env,data));}catch(error){return json(400,{error:error.message});}
+ }
  if(path==='/api/logout'){
   await env.DB.prepare('DELETE FROM sessions WHERE token=?').bind(await hash(token(request))).run();
   return json(200,{ok:true},'asc_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0');
@@ -95,7 +110,7 @@ async function api(request,env,url){
  }
  return json(404,{error:'Page inconnue.'});
 }
-export default {async fetch(request,env){
+export default {async scheduled(event,env,ctx){ctx.waitUntil(scheduledDelivery(env,new Date(event.scheduledTime)));},async fetch(request,env){
  const url=new URL(request.url);
  try{
   if(url.pathname.startsWith('/api/'))return await api(request,env,url);

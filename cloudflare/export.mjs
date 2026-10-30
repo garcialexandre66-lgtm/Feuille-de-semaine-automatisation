@@ -6,25 +6,29 @@ const duration=m=>m?`${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')}`:'';
 const total=item=>fields.reduce((n,key)=>n+item[key],0);
 const dateText=value=>{const d=new Date(value+'T12:00:00');return d.toLocaleDateString('fr-FR');};
 async function asset(path){const response=await fetch(path);if(!response.ok)throw Error('Le modèle d’export est indisponible.');return new Uint8Array(await response.arrayBuffer());}
-export async function createPdf(data){
- const [background,fontBytes]=await Promise.all([asset('/modele.pdf'),asset('/texte.ttf')]);
+export async function createPdf(data,readAsset=asset){
+ const start=new Date(data.week+'T12:00:00Z');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(data.week)||!Number.isFinite(start.getTime())||start.toISOString().slice(0,10)!==data.week||start.getUTCDay()!==1)throw Error('Choisissez une semaine valide commençant le lundi.');
+ if(!Array.isArray(data.days)||![5,7].includes(data.days.length)||data.days.some(day=>!Array.isArray(day)||day.length>8))throw Error('La feuille doit contenir au maximum huit lignes par jour.');
+ if(data.days.slice(5).some(day=>day.length))throw Error('Des entrées existent le week-end. Validez leur exclusion avant de générer le PDF.');
+ const [background,fontBytes]=await Promise.all([readAsset('/modele-semaine.pdf'),readAsset('/texte.ttf')]);
  const pdf=await PDFDocument.load(background);pdf.registerFontkit(fontkit);
  const font=await pdf.embedFont(fontBytes,{subset:true});
  const glyphs=new Set(font.getCharacterSet());
  const safe=value=>Array.from(String(value).replace(/[\r\n\t]/g,' '),c=>glyphs.has(c.codePointAt(0))?c:'?').join('');
  const page=pdf.getPage(0),height=page.getHeight();
  function text(value,x,top,width,size=6.3){if(!value)return;const content=safe(value),measured=font.widthOfTextAtSize(content,size);const scaled=measured>width?size*width/measured:size;page.drawText(content,{x,y:height-top-scaled,size:scaled,font,color:rgb(0,0,0)});}
- const end=new Date(data.week+'T12:00:00');end.setDate(end.getDate()+6);
+ const end=new Date(data.week+'T12:00:00');end.setDate(end.getDate()+4);
  const endText=end.toLocaleDateString('fr-FR');
  text(`Nom du technicien : ${data.name}`,18.25,53.5,126,7);
  text(`Semaine du ${dateText(data.week)} au ${endText}`,18.25,67.4,126,6.5);
  // Coordinates measured on the original ASC model, fitted to one A4 page.
  const columns=[52.166,138.263,191.282,233.804,273.688,293.630,313.571,328.791,344.010,360.281,380.222,400.164];
  let cumulative=0;
- data.days.forEach((day,dayIndex)=>{
+ data.days.slice(0,5).forEach((day,dayIndex)=>{
   day.forEach((item,index)=>{
    const minutes=total(item),overtime=Math.max(0,cumulative+minutes-2100)-Math.max(0,cumulative-2100);cumulative+=minutes;
-   const values=[item.client,item.city,'','',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(overtime)];
+   const values=[item.client,item.city,item.prep||'',item.intervention||'',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(overtime)];
    const top=105.8+(dayIndex*8+index)*12.481;
    values.forEach((value,i)=>text(value,columns[i]+1,top,columns[i+1]-columns[i]-2));
   });
@@ -53,7 +57,7 @@ export async function createOds(data){
  let cumulative=0;
  data.days.forEach((day,dayIndex)=>{day.forEach((item,index)=>{
   const minutes=total(item),extra=Math.max(0,cumulative+minutes-2100)-Math.max(0,cumulative-2100);cumulative+=minutes;
-  const values=[item.client,item.city,'','',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(extra)];
+  const values=[item.client,item.city,item.prep||'',item.intervention||'',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(extra)];
   const line=cells(rows[5+dayIndex*8+index]);values.forEach((value,i)=>put(line[i+2],value));
  });});
  files['content.xml']=strToU8(new XMLSerializer().serializeToString(xml));

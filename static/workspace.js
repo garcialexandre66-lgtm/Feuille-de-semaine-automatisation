@@ -46,10 +46,11 @@ $('mark-sent').onclick=()=>{
 let sharedFile=null,sharedSignature='';
 $('share-pdf').onclick=async()=>{
  if(!store.name.trim()){openSettings();$('name').focus();$('status').textContent='Indiquez votre nom avant de partager la feuille.';return;}
+ const payload=preparePdf();if(!payload)return;
  const button=$('share-pdf');button.disabled=true;
  try{
-  const signature=week+Timesheet.signature(store.name,days());
-  if(!sharedFile||sharedSignature!==signature){sharedFile=new File([await weekBlob(true)],`feuille-semaine-${week}.pdf`,{type:'application/pdf'});sharedSignature=signature;}
+  const signature=payload.week+Timesheet.signature(payload.name,payload.days);
+  if(!sharedFile||sharedSignature!==signature){sharedFile=new File([await weekBlob(true,payload)],pdfFilename(payload),{type:'application/pdf'});sharedSignature=signature;}
   if(navigator.canShare?.({files:[sharedFile]})){
    try{await navigator.share({files:[sharedFile],title:'Ma feuille de semaine'});$('status').textContent='Menu de partage fermé. Après l’envoi, vous pouvez marquer la feuille comme envoyée.';button.textContent='Partager le PDF';}
    catch(error){if(error.name==='AbortError')return;if(error.name==='NotAllowedError'){button.textContent='Partager le PDF prêt';$('status').textContent='PDF prêt : appuyez à nouveau sur Partager pour choisir votre application.';return;}throw error;}

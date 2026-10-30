@@ -19,7 +19,7 @@ function checkStore(s){
  for(const [date,days] of Object.entries(s.weeks)){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(new Date(date+'T12:00:00').getTime())||monday(date)!==date||!Array.isArray(days)||days.length!==7)throw Error('Semaine invalide.');
   for(const day of days){if(!Array.isArray(day)||day.length>8)throw Error('Plus de 8 interventions dans une journée.');
-   for(const item of day){if(!item||typeof item.client!=='string'||typeof item.city!=='string'||item.client.length>200||item.city.length>200||fields.some(k=>!Number.isInteger(item[k])||item[k]<0||item[k]>1440))throw Error('Intervention invalide.');}
+   for(const item of day){if(!item||typeof item.client!=='string'||typeof item.city!=='string'||item.client.length>200||item.city.length>200||fields.some(k=>!Number.isInteger(item[k])||item[k]<0||item[k]>1440)||['prep','intervention'].some(k=>item[k]!==undefined&&(typeof item[k]!=='string'||item[k].length>80)))throw Error('Intervention invalide.');}
    if(day.some(item=>isAbsence(item))&&(day.length!==1||daySum(day)!==0||day[0].client!==absenceLabels[day[0].kind]))throw Error('Une journée d’absence ne peut pas contenir d’heures travaillées.');
    if(daySum(day)>1440)throw Error('Une journée dépasse 24 heures.');
   }
@@ -46,6 +46,7 @@ function render(){
  $('previous-day').disabled=selected===0; $('next-day').disabled=selected===4;
  $('next-day').textContent=selected<4?`Passer à ${names[selected+1].toLowerCase()} →`:'Fin de la semaine';
  renderWorkspace();
+ if(typeof renderSimple==='function')renderSimple();
 }
 function openEditor(index=-1){editing=index;$('form').reset();$('error').textContent='';$('editor-title').textContent=index<0?'Nouvelle intervention':'Modifier l’intervention';if(index>=0){const item=days()[selected][index];$('workplace').value=['atelier','school'].includes(item.workplace)?item.workplace:'client';for(const k of ['client','city',...fields])$('form').elements[k].value=fields.includes(k)&&k!=='travel'?fmt(item[k]):item[k];}updateWorkplace();step=0;$('wizard-day').textContent=names[selected]+' · '+$('daydate').textContent;showStep();rememberClients();renderFavoriteChoices();$('editor').showModal();}
 function parseDuration(text){const s=text.trim().toLowerCase();let m=s.match(/^(\d+)\s*(?:h|:)\s*(\d{1,2})?$/);if(m){if(Number(m[2]||0)>59)throw Error('Les minutes doivent être entre 0 et 59.');return Number(m[1])*60+Number(m[2]||0);}if(/^\d+$/.test(s))return Number(s)*60;throw Error('Saisissez une durée comme 2h30, 2:30 ou 2h.');}
@@ -65,9 +66,9 @@ function updateWorkplace(){
 }
 $('workplace').onchange=()=>{updateWorkplace();showStep();};
 function readItem(){
- const f=$('form').elements,item={client:f.client.value.trim(),city:f.city.value.trim()};
+ const f=$('form').elements,item={client:f.client.value.trim(),city:f.city.value.trim(),prep:f.prep?.value.trim()||'',intervention:f.intervention?.value.trim()||''};
  for(const k of fields)item[k]=isWorkshop()&&k!=='tpe'?0:k==='travel'?Number(f[k].value):parseDuration(f[k].value);
- if(isWorkshop()){const school=$('workplace').value==='school';item.client=school?'École':'Atelier ASC';item.city='';item.workplace=school?'school':'atelier';}
+ if(isWorkshop()){const school=$('workplace').value==='school';item.client=school?'École':'Atelier ASC';item.city='';item.prep='';item.intervention='';item.workplace=school?'school':'atelier';}
  if(!sum(item))throw Error('Indiquez au moins une durée.');
  const day=[...days()[selected]];if(editing<0)day.push(item);else day[editing]=item;
  checkStore({name:store.name,weeks:{[week]:days().map((d,i)=>i===selected?day:d)}});
@@ -103,15 +104,33 @@ $('week').onchange=()=>{if(!$('week').value)return;week=monday($('week').value);
 function download(blob,name){const a=node('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('backup').onclick=()=>download(new Blob([JSON.stringify(store,null,2)],{type:'application/json'}),'mes-semaines-asc.json');
 $('restore').onclick=()=>$('file').click();$('file').onchange=async()=>{const f=$('file').files[0];if(!f)return;try{if(f.size>5_000_000)throw Error('Fichier trop volumineux.');const raw=JSON.parse(await f.text()),hadRecovery=Object.hasOwn(raw,'recovery');const incoming=checkStore(raw);if(!hadRecovery)incoming.recovery=store.recovery;if(confirm('Importer cette sauvegarde ? Les semaines présentes dans le fichier remplaceront les mêmes semaines sur cet appareil.')){store=mergeImported(store,incoming);save();render();}}catch(err){$('status').textContent='Import impossible : '+err.message;}$('file').value='';};
-async function weekBlob(pdf=true){
- const payload={name:store.name,week,days:days()};
+function preparePdf(){
+ const payload=JSON.parse(JSON.stringify({name:store.name,week,days:days()}));
+ if(!payload.days.some(day=>day.length)){$('status').textContent='Cette semaine est vide. Choisissez la semaine réellement remplie dans l’historique.';return null;}
+ const weekend=payload.days.slice(5).flatMap((day,index)=>day.map(item=>{
+  const date=new Date(payload.week+'T12:00:00');date.setDate(date.getDate()+5+index);
+  return `${names[5+index]} ${date.toLocaleDateString('fr-FR')} : ${item.client||'Sans client'}${item.city?' · '+item.city:''} · trajet ${item.travel} min · total ${fmt(sum(item))}`;
+ }));
+ if(weekend.length&&!confirm(`Des entrées existent le week-end :\n\n${weekend.join('\n')}\n\nLe PDF contient uniquement lundi à vendredi. Ces entrées restent enregistrées, mais leurs lignes et leurs heures seront exclues du PDF et de ses totaux.\n\nOK : continuer sans ces entrées.\nAnnuler : revenir à l’application sans télécharger ni partager.`)){$('status').textContent='Export annulé. Les entrées du week-end sont conservées.';return null;}
+ payload.days=payload.days.slice(0,5);
+ return payload;
+}
+function pdfFilename(payload){
+ const end=new Date(payload.week+'T12:00:00');end.setDate(end.getDate()+4);
+ const date=value=>new Date(value+'T12:00:00').toLocaleDateString('fr-FR').replaceAll('/','-');
+ return `Semaine du ${date(payload.week)} au ${date(iso(end))}.pdf`;
+}
+async function weekBlob(pdf=true,payload={name:store.name,week,days:days()}){
  if(window.ASC_CLOUDFLARE){const exporter=await import('/cloud-export.js');return pdf?exporter.createPdf(payload):exporter.createOds(payload);}
+ if(pdf&&payload.days.length===5)payload={...payload,days:[...payload.days,[],[]]};
  const res=await fetch(pdf?'/export/pdf':'/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!res.ok)throw Error(await res.text());return res.blob();
 }
 async function exportWeek(pdf=true){
  if(!store.name.trim()){$('status').textContent='Indiquez votre nom dans les réglages avant d’exporter.';openSettings();$('name').focus();return;}
+ const payload=pdf?preparePdf():JSON.parse(JSON.stringify({name:store.name,week,days:days()}));
+ if(!payload)return;
  const button=$(pdf?'export':'export-ods');button.disabled=true;
- try{download(await weekBlob(pdf),`feuille-semaine-${week}.${pdf?'pdf':'ods'}`);$('status').textContent=pdf?'PDF téléchargé. Vous pourrez le joindre à votre mail.':'Fichier ODS téléchargé.';}
+ try{download(await weekBlob(pdf,payload),pdf?pdfFilename(payload):`feuille-semaine-${payload.week}.ods`);$('status').textContent=pdf?'PDF téléchargé. Vous pourrez le joindre à votre mail.':'Fichier ODS téléchargé.';}
  catch(err){$('status').textContent='Export impossible : '+err.message;}
  finally{button.disabled=false;}
 }

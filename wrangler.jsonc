@@ -4,6 +4,7 @@
   "main": "cloudflare/worker.mjs",
   "compatibility_date": "2026-10-28",
   "workers_dev": true,
+  "triggers": { "crons": ["*/15 * * * 4,5"] },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
