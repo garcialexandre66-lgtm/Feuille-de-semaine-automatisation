@@ -1,10 +1,12 @@
 # Nouvelle feuille de semaine
 
-L’utilisateur a précisé le calcul attendu par journée : 9 h donnent 1 h supplémentaire ; 6 h donnent zéro. L’accueil et la colonne H.SUP des exports additionnent uniquement les dépassements de 8 h par journée. Une semaine de 8 h, 8 h, 8 h, 7 h et 6 h donne donc zéro dans cet affichage journalier. Dans le PDF, une case H.SUP vide signifie zéro. Plusieurs lignes d’une même journée sont additionnées avant d’appliquer le seuil de 8 h ; le seuil repart à zéro le lendemain.
+En bas de l’accueil, « Total de la semaine » montre toutes les heures saisies de la semaine affichée, y compris les interventions de week-end si elles existent. À 35 h ou moins, le chiffre reste normal. Au-delà de 35 h, il devient rouge et le dépassement apparaît juste dessous : par exemple, 37 h et « +2 h 00 d’heures sup ». Le lien « Consulter vos heures sup » ouvre directement le compteur total suivi, avec les RTT pris et prévus et le solde de départ s’il a été renseigné.
+
+Dans la colonne H.SUP des exports, le calcul journalier demandé reste distinct : 9 h donnent 1 h supplémentaire ; 6 h donnent zéro. Une semaine de 8 h, 8 h, 8 h, 7 h et 6 h donne zéro dans ces cases journalières. Dans le PDF, une case H.SUP vide signifie zéro. Plusieurs lignes d’une même journée sont additionnées avant d’appliquer le seuil de 8 h ; le seuil repart à zéro le lendemain.
 
 Le compteur de récupération dans le récapitulatif mensuel reste séparé, avec le contrat de 35 h confirmé par l’utilisateur : dépassements hebdomadaires saisis, moins les RTT pris (8 h par journée déjà définie dans l’application). Les RTT futurs restent réservés séparément. Les saisies futures ne créent pas de crédit. Un montant confirmé pour une semaine remplace son calcul automatique ; une correction recalcule cette semaine sans doublon. Ce suivi reste une estimation à comparer au décompte de la secrétaire, sans inventer de majoration ni de prime.
 
-Pour inclure les anciennes heures, ouvrir Réglages → Mon récapitulatif mensuel → Renseigner mon solde de départ : choisir la date de début et, s’il est connu, le solde à cette date. Quand le départ est inconnu, l’accueil montre quand même les mouvements suivis avec leur date de début, sans les présenter comme le solde total. L’historique et le point de départ restent conservés.
+Pour inclure les anciennes heures, ouvrir « Consulter vos heures sup » → Renseigner mon solde de départ : choisir la date de début et, s’il est connu, le solde à cette date. Quand le départ est inconnu, ce compteur montre quand même les mouvements suivis, sans les présenter comme le solde total. L’historique et le point de départ restent conservés.
 
 La mise à jour s’installe par GitHub, puis par le déploiement Cloudflare déjà relié au dépôt. Rien à coller dans Google Sheets ou Apps Script. Les données personnelles restent dans la base existante.
 

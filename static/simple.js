@@ -26,8 +26,11 @@ $('form').onsubmit=event=>{
 };
 // Keep the existing, tested calculations and entry editing in the expanded card.
 const dayPanel=$('view-day');
-const overtimeStrip=node('section',null,'overtime-strip'),overtimeInfo=node('div'),overtimeTitle=node('strong','Heures sup de la semaine'),overtimeValue=node('strong'),overtimeNote=node('p');
-overtimeValue.id='automatic-overtime';overtimeNote.id='automatic-overtime-note';overtimeInfo.append(overtimeTitle,overtimeNote);overtimeStrip.append(overtimeInfo,overtimeValue);$('simple-home').insertBefore(overtimeStrip,$('simple-home').querySelector('.download-bar'));
+const overtimeStrip=node('section',null,'overtime-strip'),overtimeInfo=node('div'),overtimeTitle=node('strong','Total de la semaine'),overtimeValue=node('strong'),overtimeNote=node('p');
+const overtimeFigure=node('div',null,'week-hours-figure'),overtimeExtra=node('p'),overtimeLink=node('a','Consulter vos heures sup','overtime-link');
+overtimeValue.id='automatic-overtime';overtimeNote.id='automatic-overtime-note';overtimeExtra.id='weekly-overtime-excess';overtimeExtra.setAttribute('aria-live','polite');overtimeLink.id='consult-overtime';overtimeLink.href='#heures-supplementaires';
+overtimeLink.onclick=event=>{event.preventDefault();openMonth();$('month-dialog').querySelector('.dialog-title h2').textContent='Mes heures supplémentaires';$('recovery-balance').setAttribute('tabindex','-1');$('recovery-balance').focus();};
+overtimeInfo.append(overtimeTitle,overtimeNote);overtimeFigure.append(overtimeValue,overtimeExtra);overtimeStrip.append(overtimeInfo,overtimeFigure,overtimeLink);$('simple-home').insertBefore(overtimeStrip,$('simple-home').querySelector('.download-bar'));
 $('recovery-earned').parentElement.firstChild.textContent='Heures calculées ';
 $('validate-credit').textContent='Confirmer ce montant';
 $('validate-credit').closest('details').querySelector('summary').textContent='Corriger ou confirmer une semaine';
@@ -45,9 +48,11 @@ function renderSimple(){
  const weekend=days().slice(5).flatMap((day,index)=>day.some(item=>!isAbsence(item)&&sum(item)>0)?[dayCard(day,index+5)]:[]);
  $('oncall').hidden=!weekend.length;$('oncall-cards').replaceChildren(...weekend);
  $('check-pdf').hidden=expandedDay!==null;
- const dailyExtra=days().slice(0,5).reduce((minutes,day)=>minutes+Timesheet.dayOvertime(day),0);
- overtimeValue.textContent=fmt(dailyExtra);
- overtimeNote.textContent='Semaine affichée · somme des dépassements de 8 h par jour';
+ const weekMinutes=days().reduce((minutes,day)=>minutes+daySum(day),0),extra=Math.max(0,weekMinutes-2100);
+ overtimeValue.textContent=fmt(weekMinutes);
+ overtimeStrip.classList.toggle('over-limit',extra>0);
+ overtimeExtra.hidden=extra===0;overtimeExtra.textContent=extra?'+'+fmt(extra)+' d’heures sup':'';
+ overtimeNote.textContent='Semaine affichée · base de 35 h';
 }
 function dayCard(day,index){
  const card=node('details',null,'week-card'),summary=node('summary'),heading=node('div',null,'card-heading');
@@ -98,6 +103,7 @@ $('history-content').append($('history-list'));
 $('month-content').append($('view-month'));$('view-month').hidden=false;
 const monthlyOncall=node('p');monthlyOncall.id='monthly-oncall';$('view-month').append(monthlyOncall);
 function openMonth(){
+ $('month-dialog').querySelector('.dialog-title h2').textContent='Mon récapitulatif';
  if($('settings-dialog').open)$('settings-dialog').close();currentView='month';renderMonth();$('view-month').hidden=false;
  $('month-dialog').showModal();
 }

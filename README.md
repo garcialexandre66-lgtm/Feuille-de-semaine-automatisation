@@ -55,7 +55,7 @@ Réglages → Mon planning d’école permet de marquer les dates prévues (lund
 
 Le samedi et le dimanche sont conservés en données, notamment pour le décompte des congés existant. Les interventions de week-end apparaissent dans un bloc Astreinte séparé. Le PDF Cloudflare contient uniquement lundi à vendredi ; toute entrée de week-end est signalée avant export et reste conservée en données. L’ODS et l’hébergement Python historique conservent leur modèle sur sept jours.
 
-Dans les exports, H.SUP indique le dépassement de **8 h par journée**, selon la précision de l’utilisateur. Les lignes d’un même jour sont cumulées et le seuil repart le lendemain : 9 h donnent 1 h ; 6 h donnent zéro. L’accueil additionne ces dépassements pour la semaine affichée. Le suivi de récupération sur le contrat de 35 h reste distinct, dans le récapitulatif mensuel.
+Dans les exports, H.SUP indique le dépassement de **8 h par journée**, selon la précision de l’utilisateur. Les lignes d’un même jour sont cumulées et le seuil repart le lendemain : 9 h donnent 1 h ; 6 h donnent zéro. L’accueil affiche le total des heures de la semaine : au-delà de 35 h, ce total devient rouge et le dépassement est indiqué dessous. « Consulter vos heures sup » ouvre le compteur cumulé sur 35 h, avec les RTT pris et prévus et un solde de départ distinct lorsqu’il est inconnu.
 
 ## Partage, favoris et rappel
 
