@@ -1,5 +1,9 @@
 # Nouvelle feuille de semaine
 
+Le contrat de 35 h a été confirmé par l’utilisateur. L’accueil affiche maintenant une estimation automatique des heures à récupérer : dépassements hebdomadaires saisis, moins les RTT pris (8 h par journée déjà définie dans l’application). Les RTT futurs restent réservés séparément. Les saisies futures ne créent pas de crédit. Un montant confirmé pour une semaine remplace son calcul automatique ; une correction recalcule cette semaine sans doublon. Le calcul reste une estimation à comparer au décompte de la secrétaire, sans inventer de majoration ni de prime.
+
+Pour inclure les anciennes heures, ouvrir Réglages → Mon récapitulatif mensuel → Renseigner mon solde de départ : choisir la date de début et, s’il est connu, le solde à cette date. Quand le départ est inconnu, l’accueil montre quand même les mouvements suivis avec leur date de début, sans les présenter comme le solde total. L’historique et le point de départ restent conservés.
+
 La mise à jour s’installe par GitHub, puis par le déploiement Cloudflare déjà relié au dépôt. Rien à coller dans Google Sheets ou Apps Script. Les données personnelles restent dans la base existante.
 
 ## Vérifier sur téléphone ou ordinateur

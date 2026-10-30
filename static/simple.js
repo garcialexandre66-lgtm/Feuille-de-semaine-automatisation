@@ -26,6 +26,11 @@ $('form').onsubmit=event=>{
 };
 // Keep the existing, tested calculations and entry editing in the expanded card.
 const dayPanel=$('view-day');
+const overtimeStrip=node('section',null,'overtime-strip'),overtimeInfo=node('div'),overtimeTitle=node('strong','Heures à récupérer'),overtimeValue=node('strong'),overtimeNote=node('p');
+overtimeValue.id='automatic-overtime';overtimeNote.id='automatic-overtime-note';overtimeInfo.append(overtimeTitle,overtimeNote);overtimeStrip.append(overtimeInfo,overtimeValue);$('simple-home').insertBefore(overtimeStrip,$('simple-home').querySelector('.download-bar'));
+$('recovery-earned').parentElement.firstChild.textContent='Heures calculées ';
+$('validate-credit').textContent='Confirmer ce montant';
+$('validate-credit').closest('details').querySelector('summary').textContent='Corriger ou confirmer une semaine';
 function renderSimple(){
  if(!$('simple-home'))return;
  if(expandedDay>=5&&!days()[expandedDay].some(item=>!isAbsence(item)&&sum(item)>0))expandedDay=null;
@@ -40,6 +45,9 @@ function renderSimple(){
  const weekend=days().slice(5).flatMap((day,index)=>day.some(item=>!isAbsence(item)&&sum(item)>0)?[dayCard(day,index+5)]:[]);
  $('oncall').hidden=!weekend.length;$('oncall-cards').replaceChildren(...weekend);
  $('check-pdf').hidden=expandedDay!==null;
+ const estimate=Timesheet.estimatedRecovery(store);
+ overtimeValue.textContent=signedMinutes(estimate.known?estimate.available:estimate.change);
+ overtimeNote.textContent=estimate.known?`Estimation sur 35 h par semaine${estimate.planned?' · '+fmt(estimate.planned)+' de RTT prévus réservés':''}`:`Depuis le ${new Date(estimate.startDate+'T12:00:00').toLocaleDateString('fr-FR')} · ancien solde à renseigner${estimate.planned?' · RTT prévus : '+fmt(estimate.planned):''}`;
 }
 function dayCard(day,index){
  const card=node('details',null,'week-card'),summary=node('summary'),heading=node('div',null,'card-heading');

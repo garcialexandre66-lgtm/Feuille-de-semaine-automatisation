@@ -60,6 +60,28 @@
   result.change=result.earned-result.taken;result.balance=result.known?r.openingMinutes+result.change:null;result.available=result.known?result.balance-result.planned:null;result.lines.sort((a,b)=>b.date.localeCompare(a.date));return result;
  }
  function signature(name,days){let h=2166136261;for(const c of JSON.stringify([name,days])){h^=c.codePointAt(0);h=Math.imul(h,16777619);}return (h>>>0).toString(16).padStart(8,'0');}
+ function estimatedRecovery(s,now=new Date()){
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).map(p=>[p.type,p.value]));
+  const today=`${parts.year}-${parts.month}-${parts.day}`,r=s.recovery;
+  const debits=recoverySummary(s,new Date(today+'T12:00:00Z'));
+  const result={known:r.openingMinutes!==null,startDate:r.startDate,earned:0,taken:debits.taken,planned:debits.planned,ongoing:0,lines:[]};
+  for(const week of new Set([...Object.keys(s.weeks),...Object.keys(r.weeks)])){
+   if(week>today||weekEnd(week)<r.startDate)continue;
+   const days=s.weeks[week]||Array.from({length:7},()=>[]);let total=0,futureWork=false;
+   days.forEach((day,i)=>{
+    const d=new Date(week+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+i);const date=d.toISOString().slice(0,10);
+    if(date<=today)total+=dayTotal(day);else if(dayTotal(day))futureWork=true;
+   });
+   const confirmation=r.weeks[week],confirmed=weekEnd(week)<=today&&!futureWork&&creditValid(s,week,new Date(today+'T12:00:00Z'));
+   const credit=confirmed?confirmation.credit:Math.max(0,total-2100),ongoing=weekEnd(week)>today||futureWork;
+   result.earned+=credit;if(ongoing)result.ongoing+=credit;
+   if(credit)result.lines.push({week,minutes:credit,confirmed,ongoing});
+  }
+  result.change=result.earned-result.taken;
+  result.balance=result.known?r.openingMinutes+result.change:null;
+  result.available=result.known?result.balance-result.planned:null;
+  return result;
+ }
  function sentStatus(s,week){const meta=s.weekMeta?.[week];if(!meta)return 'À envoyer';return meta.signature===signature(s.name,s.weeks[week]||[])?'Envoyée':'À renvoyer';}
  function merge(base,local,remote){
   function choose(a,b,c){if(JSON.stringify(b)===JSON.stringify(c))return clone(b);if(JSON.stringify(a)===JSON.stringify(b))return c===undefined?undefined:clone(c);if(JSON.stringify(a)===JSON.stringify(c))return b===undefined?undefined:clone(b);throw Error('Conflit');}
@@ -77,5 +99,5 @@
    return extras(result);
   }catch{return null;}
  }
- globalThis.Timesheet=Object.freeze({extras,monthSummary,signature,sentStatus,merge,dayTotal,weekOvertime,weekEnd,creditValid,recoverySummary});
+ globalThis.Timesheet=Object.freeze({extras,monthSummary,signature,sentStatus,merge,dayTotal,weekOvertime,weekEnd,creditValid,recoverySummary,estimatedRecovery});
 })();

@@ -5,19 +5,21 @@ function creditPreview(){
  $('credit-duration').value=fmt(credit);$('credit-description').textContent=source==='school'?'Une semaine d’école de 39 h confirmée donne 4 h à récupérer.':`${fmt(total)} saisies − 35 h de contrat : ${fmt(credit)} proposées. Vérifiez avant de valider.`;
 }
 function renderRecovery(){
- const report=Timesheet.recoverySummary(store);
- $('recovery-balance').textContent=report.known?signedMinutes(report.available)+' disponibles':'Solde de départ encore inconnu';
- $('recovery-description').textContent=report.known?`Solde après récupérations prises : ${signedMinutes(report.balance)}. Une journée de récupération déduit 8 h.`:`Depuis le début du suivi : ${signedMinutes(report.change)} hors récupérations futures. Ce n’est pas votre solde total tant que le départ n’est pas renseigné.`;
+ const report=Timesheet.estimatedRecovery(store);
+ $('recovery-balance').textContent=report.known?signedMinutes(report.available)+' estimées disponibles':signedMinutes(report.change)+' suivies';
+ $('recovery-description').textContent=`Contrat de 35 h : les heures saisies au-delà de 35 h par semaine sont comptées automatiquement. Un RTT pris déduit 8 h. ${report.known?`Avant RTT prévus : ${signedMinutes(report.balance)}.`:'Ancien solde inconnu : le chiffre couvre seulement les mouvements depuis le début du suivi.'}`;
  $('recovery-earned').textContent=fmt(report.earned);$('recovery-taken').textContent=fmt(report.taken);$('recovery-planned').textContent=fmt(report.planned);
- $('recovery-warning').textContent=report.invalid?`${report.invalid} semaine(s) corrigée(s) ou à venir : crédit non comptabilisé tant qu’elles ne sont pas revalidées.`:'Les crédits sont ajoutés une seule fois, après validation. Les récupérations futures sont réservées séparément.';
+ $('recovery-warning').textContent='Estimation d’après vos saisies, à comparer au décompte de la secrétaire. Les heures futures sont exclues, les RTT prévus sont réservés et les corrections recalculent le compteur sans doublon.';
  if(document.activeElement!==$('recovery-start'))$('recovery-start').value=store.recovery.startDate;
  if(document.activeElement!==$('recovery-opening'))$('recovery-opening').value=store.recovery.openingMinutes===null?'':signedMinutes(store.recovery.openingMinutes).replace('+ ','').replace('− ','-');
  if(![$('credit-duration'),$('credit-source'),$('credit-week')].includes(document.activeElement)){
   $('credit-week').value=week;$('credit-source').value=store.recovery.weeks[week]?.source||'work';creditPreview();
  }
  const schoolDone=days()[selected].some(item=>item.workplace==='school');$('school-badge').hidden=!store.schoolDates[selectedDate()]&&!schoolDone;$('school-badge').textContent=schoolDone?'École · heures saisies':'École prévue';
- $('recovery-history').replaceChildren(...report.lines.map(line=>node('p',`${new Date(line.date+'T12:00:00').toLocaleDateString('fr-FR')} · ${line.label} · ${signedMinutes(line.minutes)}`)));
- if(!report.lines.length)$('recovery-history').append(node('p','Aucun mouvement validé depuis le début du suivi.','hint'));
+ const estimated=report.lines.map(line=>node('p',`Semaine du ${new Date(line.week+'T12:00:00').toLocaleDateString('fr-FR')} · ${signedMinutes(line.minutes)}${line.confirmed?' · crédit confirmé':line.ongoing?' · semaine en cours':' · calcul automatique'}`));
+ const debits=Timesheet.recoverySummary(store).lines.filter(line=>line.minutes<0).map(line=>node('p',`${new Date(line.date+'T12:00:00').toLocaleDateString('fr-FR')} · ${line.label} · ${signedMinutes(line.minutes)}`));
+ $('recovery-history').replaceChildren(...estimated,...debits);
+ if(!estimated.length&&!debits.length)$('recovery-history').append(node('p','Aucun mouvement depuis le début du suivi.','hint'));
 }
 $('opening-form').onsubmit=event=>{
  event.preventDefault();try{
