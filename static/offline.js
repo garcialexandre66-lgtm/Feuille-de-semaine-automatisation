@@ -25,8 +25,40 @@ globalThis.OfflineStore=(()=>{
  function lock(){cryptoKey=null;salt=null;try{sessionStorage.removeItem(tabKey);}catch{}}
  return {record,restore,unlock,prepare,persist,lock,ready:()=>!!cryptoKey,flush:()=>lastWrite};
 })();
+let refreshInProgress=false,lastUpdateCheck=0;
+async function checkForAppUpdates(){
+ if(!('serviceWorker' in navigator)||!navigator.onLine||document.visibilityState==='hidden'||Date.now()-lastUpdateCheck<30000)return;
+ lastUpdateCheck=Date.now();try{const registration=await navigator.serviceWorker.getRegistration();if(registration)await registration.update();}catch{}
+}
+async function refreshApplication(){
+ if(refreshInProgress)return;
+ if(document.querySelector('#editor[open]')&&!confirm('Actualiser et fermer la ligne non enregistrée ?'))return;
+ refreshInProgress=true;for(const id of ['refresh-app','reload-app'])if($(id))$(id).disabled=true;
+ try{
+  $('status').textContent='Enregistrement et actualisation…';
+  if(typeof dirty!=='undefined'&&dirty){
+   if(connected)await push();
+   if(dirty&&!await persist())throw Error('Sauvegarde impossible. Gardez la page ouverte et téléchargez une sauvegarde.');
+  }
+  await OfflineStore.flush();
+  if('serviceWorker' in navigator){
+   try{
+    const registration=await navigator.serviceWorker.getRegistration();if(registration){
+     await registration.update();const worker=registration.installing||registration.waiting;
+     if(worker&&worker.state!=='activated'&&worker.state!=='redundant')await new Promise(resolve=>{const timer=setTimeout(resolve,12000);worker.addEventListener('statechange',()=>{if(['activated','redundant'].includes(worker.state)){clearTimeout(timer);resolve();}});});
+    }
+   }catch{}
+  }
+  // Reload this tab: its current session and tab encryption key are preserved.
+  location.reload();
+ }catch(error){$('status').textContent=error.message;refreshInProgress=false;for(const id of ['refresh-app','reload-app'])if($(id))$(id).disabled=false;}
+}
+if($('refresh-app'))$('refresh-app').onclick=refreshApplication;
+$('reload-app').onclick=refreshApplication;
 if('serviceWorker' in navigator){
  let controlled=!!navigator.serviceWorker.controller;
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(controlled)$('update-ready').hidden=false;controlled=true;});
- $('reload-app').onclick=async()=>{if(document.querySelector('#editor[open]')&&!confirm('Fermer la saisie en cours pour actualiser ? Les champs non enregistrés seront perdus.'))return;try{await OfflineStore.flush();location.reload();}catch{$('status').textContent='Téléchargez une sauvegarde avant d’actualiser : la sauvegarde locale a échoué.';}};
+ window.addEventListener('focus',checkForAppUpdates);
+ document.addEventListener('visibilitychange',checkForAppUpdates);
+ setInterval(checkForAppUpdates,60000);
 }

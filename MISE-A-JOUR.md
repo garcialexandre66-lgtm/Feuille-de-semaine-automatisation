@@ -1,5 +1,19 @@
 # Nouvelle feuille de semaine
 
+## Actualiser sans fermer l’onglet
+
+Le bouton ↻ en haut recharge l’onglet actuel, conserve sa connexion tant que la session est valide et attend l’enregistrement des saisies avant de recharger. Une ligne encore ouverte et non enregistrée demande confirmation avant d’être abandonnée. Les nouvelles versions sont recherchées au retour dans l’application et pendant son utilisation ; le bouton « Actualiser l’application » apparaît lorsqu’une mise à jour est détectée. Le cache des scripts est revalidé et les saisies enregistrées hors connexion restent conservées.
+
+La durée de connexion et le stockage du code personnel restent inchangés. Fermer l’onglet peut toujours nécessiter le code au retour, et une session expirée demande une reconnexion. Pour une mise à jour, utiliser ↻ dans l’onglet déjà ouvert.
+
+## Préparer l’envoi dans Gmail
+
+« Envoyer par Gmail », sous le téléchargement, vérifie la feuille puis prépare son PDF. Sur un téléphone compatible, « Partager le PDF » ouvre le partage du fichier : choisir Gmail et renseigner `s.sanchez@asc66.fr`, affichée dans la fenêtre. Le PDF est transmis au menu de partage seulement après cet appui.
+
+L’autre option, « Ouvrir Gmail et télécharger le PDF », télécharge le fichier puis ouvre un brouillon Gmail avec `s.sanchez@asc66.fr`, la bonne semaine et le texte du message déjà remplis. Appuyer sur le trombone dans Gmail pour joindre le PDF téléchargé, puis sur Envoyer. Un lien vers Gmail ne peut pas joindre automatiquement un fichier local ; l’interface indique cette étape. Aucun message n’est envoyé tout seul et aucun accès Google supplémentaire n’est nécessaire pour ce bouton.
+
+## Total et compteur
+
 En bas de l’accueil, « Total de la semaine » montre toutes les heures saisies de la semaine affichée, y compris les interventions de week-end si elles existent. À 35 h ou moins, le chiffre reste normal. Au-delà de 35 h, il devient rouge et le dépassement apparaît juste dessous : par exemple, 37 h et « +2 h 00 d’heures sup ». Le lien « Consulter vos heures sup » ouvre directement le compteur total suivi, avec les RTT pris et prévus et le solde de départ s’il a été renseigné.
 
 Dans la colonne H.SUP des exports, le calcul journalier demandé reste distinct : 9 h donnent 1 h supplémentaire ; 6 h donnent zéro. Une semaine de 8 h, 8 h, 8 h, 7 h et 6 h donne zéro dans ces cases journalières. Dans le PDF, une case H.SUP vide signifie zéro. Plusieurs lignes d’une même journée sont additionnées avant d’appliquer le seuil de 8 h ; le seuil repart à zéro le lendemain.

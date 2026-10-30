@@ -48,6 +48,7 @@ function renderSimple(){
  const weekend=days().slice(5).flatMap((day,index)=>day.some(item=>!isAbsence(item)&&sum(item)>0)?[dayCard(day,index+5)]:[]);
  $('oncall').hidden=!weekend.length;$('oncall-cards').replaceChildren(...weekend);
  $('check-pdf').hidden=expandedDay!==null;
+ gmailButton.hidden=expandedDay!==null;
  const weekMinutes=days().reduce((minutes,day)=>minutes+daySum(day),0),extra=Math.max(0,weekMinutes-2100);
  overtimeValue.textContent=fmt(weekMinutes);
  overtimeStrip.classList.toggle('over-limit',extra>0);
@@ -77,20 +78,21 @@ function checkedPayload(){
  return payload;
 }
 async function downloadChecked(payload,share=false){
- const button=$('check-pdf');button.disabled=true;
+ const buttons=[$('check-pdf'),gmailButton];buttons.forEach(button=>button.disabled=true);
  try{
   const file=new File([await weekBlob(true,{...payload,days:payload.days.slice(0,5)})],pdfFilename(payload),{type:'application/pdf'});
+  if(share==='gmail'){prepareGmail(file,payload);return;}
   if(share&&navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'Ma feuille de semaine'});$('status').textContent='Menu de partage fermé.';}catch(error){if(error.name==='AbortError')return;if(error.name!=='NotAllowedError')throw error;download(file,file.name);$('status').textContent='PDF téléchargé. Vous pouvez le joindre à votre message.';}}
   else{download(file,file.name);$('status').textContent='PDF téléchargé.';}
  }
  catch(error){$('status').textContent='Téléchargement impossible : '+error.message;}
- finally{button.disabled=false;}
+ finally{buttons.forEach(button=>button.disabled=false);}
 }
 async function reviewPdf(share=false){
  const payload=checkedPayload();if(!payload)return;
  const issues=SheetReview.weekIssues(payload.days);
  if(!issues.length){await downloadChecked(payload,share);return;}
- pendingReview=payload;pendingShare=share;$('review-download').textContent=share?'Continuer le partage':'Télécharger quand même';$('review-list').replaceChildren(...issues.map(issue=>node('li',issue.message)));$('review-dialog').showModal();
+ pendingReview=payload;pendingShare=share;$('review-download').textContent=share==='gmail'?'Préparer l’envoi Gmail':share?'Continuer le partage':'Télécharger quand même';$('review-list').replaceChildren(...issues.map(issue=>node('li',issue.message)));$('review-dialog').showModal();
 }
 $('check-pdf').onclick=()=>reviewPdf();
 $('share-pdf').onclick=()=>{if($('settings-dialog').open)$('settings-dialog').close();return reviewPdf(true);};
@@ -126,6 +128,18 @@ weekendForm.onsubmit=event=>{event.preventDefault();const date=weekendDate.value
 // In the daily editor, less common actions live behind one disclosure.
 const choices=dayPanel.querySelector('.day-more');choices.querySelector('summary').textContent='Autres choix';choices.querySelector('.day-tools').prepend($('workshop-day'));
 $('previous-day').hidden=true;$('next-day').hidden=true;
+const gmailButton=node('button','Envoyer par Gmail','gmail-button');gmailButton.id='gmail-pdf';gmailButton.type='button';gmailButton.onclick=()=>reviewPdf('gmail');$('simple-home').querySelector('.download-bar').append(gmailButton);
+const gmailDialog=node('dialog'),gmailTitle=node('h2','Envoyer à la secrétaire'),gmailHeading=node('div',null,'dialog-title'),gmailClose=node('button','✕'),gmailRecipient=node('p','À : s.sanchez@asc66.fr'),gmailHelp=node('p',null,'hint'),gmailActions=node('div',null,'review-actions'),gmailShare=node('button','Partager le PDF','primary'),gmailWeb=node('a','Ouvrir Gmail et télécharger le PDF','gmail-compose'),gmailMessage=node('p');
+gmailDialog.id='gmail-dialog';gmailDialog.setAttribute('aria-label','Envoyer la feuille par Gmail');gmailClose.type='button';gmailClose.setAttribute('aria-label','Fermer');gmailClose.onclick=()=>gmailDialog.close();gmailShare.type='button';gmailShare.id='gmail-native-share';gmailWeb.id='gmail-compose';gmailWeb.target='_blank';gmailWeb.rel='noopener noreferrer';gmailMessage.setAttribute('role','status');gmailHeading.append(gmailTitle,gmailClose);gmailActions.append(gmailShare,gmailWeb);gmailDialog.append(gmailHeading,gmailRecipient,gmailHelp,gmailActions,gmailMessage);document.body.append(gmailDialog);
+function prepareGmail(file,payload){
+ const subject=file.name.replace(/\.pdf$/i,''),body=`Bonjour,\n\nVoici ma feuille de semaine en pièce jointe.\n\n${payload.name}`;
+ const url=new URL('https://mail.google.com/mail/');url.search=new URLSearchParams({view:'cm',fs:'1',to:'s.sanchez@asc66.fr',su:subject,body}).toString();
+ gmailWeb.href=url.href;gmailWeb.onclick=()=>{download(file,file.name);gmailMessage.textContent='PDF téléchargé. Dans Gmail, joins-le avec le trombone avant d’envoyer.';};
+ const canShare=!!navigator.canShare?.({files:[file]});gmailShare.hidden=!canShare;gmailMessage.textContent='';
+ gmailHelp.textContent=canShare?'Choisis Gmail dans le partage du PDF et indique s.sanchez@asc66.fr comme destinataire.':'Le PDF est prêt. Dans Gmail, appuie sur le trombone et choisis le PDF téléchargé.';
+ gmailShare.onclick=async()=>{try{await navigator.share({files:[file],title:subject,text:`À envoyer à s.sanchez@asc66.fr\n\n${body}`});gmailMessage.textContent='Menu de partage fermé.';}catch(error){if(error.name!=='AbortError')gmailMessage.textContent='Utilise « Ouvrir Gmail » puis joins le PDF téléchargé.';}};
+ gmailDialog.showModal();
+}
 async function deliveryStatus(){
  try{const data=await api('/api/delivery');$('delivery-status').textContent=data.connected?'Gmail et Drive connectés.':data.configured?'Connectez votre compte Google.':'Envoi désactivé : la connexion Google doit être configurée sur Cloudflare.';$('connect-google').disabled=!data.configured;
   const config=data.settings||{};$('delivery-to').value=config.to||'';$('delivery-copy').value=config.copy||'';$('delivery-time').value=config.time||'17:00';$('delivery-enabled').checked=!!config.enabled;

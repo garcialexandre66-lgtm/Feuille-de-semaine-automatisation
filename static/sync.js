@@ -53,7 +53,7 @@ async function pull(){
 }
 async function prepareShell(){
  if(!window.ASC_CLOUDFLARE||!('serviceWorker' in navigator))return;
- try{await navigator.serviceWorker.register('/sw.js');await navigator.serviceWorker.ready;$('offline-help').textContent='Le mode hors connexion est prêt après téléchargement des fichiers. Vos données sont chiffrées sur cet appareil.';}
+ try{await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});await navigator.serviceWorker.ready;$('offline-help').textContent='Le mode hors connexion est prêt après téléchargement des fichiers. Vos données sont chiffrées sur cet appareil.';}
  catch{$('offline-help').textContent='Les fichiers hors connexion ne sont pas encore prêts. Gardez Internet pour rouvrir l’application.';}
 }
 async function openAccount(){

@@ -2,6 +2,8 @@
 
 **Nouvelle interface et PDF lundi-vendredi : [installation, vérifications et activation Gmail/Drive](MISE-A-JOUR.md).**
 
+Le bouton ↻ actualise l’onglet actuel en préservant la session et les saisies enregistrées. Les mises à jour sont recherchées en arrière-plan. Le nouveau bouton « Envoyer par Gmail » prépare le PDF, propose le partage du fichier sur téléphone ou ouvre un brouillon Gmail adressé à la secrétaire avec téléchargement du PDF à joindre. Aucun envoi n’est déclenché sans action de l’utilisateur dans sa messagerie. La durée de session et le mode de déverrouillage existants ne sont pas modifiés.
+
 **Version Cloudflare gratuite disponible : voir [CLOUDFLARE.md](CLOUDFLARE.md).** Elle conserve les fonctions et génère PDF/ODS dans le navigateur, avec un Worker et une base D1 pour la connexion et la synchronisation. Les instructions Python ci-dessous restent valables pour un hébergement classique.
 
 Application en français adaptée au téléphone et à l’ordinateur. Python 3.10+ et LibreOffice (`libreoffice` ou `soffice`) pour le PDF ; aucune dépendance Python tierce pour le serveur.

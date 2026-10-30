@@ -11,7 +11,8 @@
     "db:remote": "wrangler d1 migrations apply asc-semaines --remote",
     "test": "node --test tests/cloudflare.test.mjs tests/pdf-export.test.mjs tests/delivery.test.mjs tests/automatic-recovery.test.mjs",
     "test:browser": "npm run build && node tests/cloudflare_browser.mjs",
-    "test:recovery": "npm run build && node tests/cloudflare_browser.mjs tests/cloudflare_recovery_browser.py"
+    "test:recovery": "npm run build && node tests/cloudflare_browser.mjs tests/cloudflare_recovery_browser.py",
+    "test:refresh": "npm run build && node tests/refresh-gmail-browser.mjs"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "1.1.1",
