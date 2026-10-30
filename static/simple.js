@@ -26,7 +26,7 @@ $('form').onsubmit=event=>{
 };
 // Keep the existing, tested calculations and entry editing in the expanded card.
 const dayPanel=$('view-day');
-const overtimeStrip=node('section',null,'overtime-strip'),overtimeInfo=node('div'),overtimeTitle=node('strong','Heures à récupérer'),overtimeValue=node('strong'),overtimeNote=node('p');
+const overtimeStrip=node('section',null,'overtime-strip'),overtimeInfo=node('div'),overtimeTitle=node('strong','Heures sup de la semaine'),overtimeValue=node('strong'),overtimeNote=node('p');
 overtimeValue.id='automatic-overtime';overtimeNote.id='automatic-overtime-note';overtimeInfo.append(overtimeTitle,overtimeNote);overtimeStrip.append(overtimeInfo,overtimeValue);$('simple-home').insertBefore(overtimeStrip,$('simple-home').querySelector('.download-bar'));
 $('recovery-earned').parentElement.firstChild.textContent='Heures calculées ';
 $('validate-credit').textContent='Confirmer ce montant';
@@ -45,9 +45,9 @@ function renderSimple(){
  const weekend=days().slice(5).flatMap((day,index)=>day.some(item=>!isAbsence(item)&&sum(item)>0)?[dayCard(day,index+5)]:[]);
  $('oncall').hidden=!weekend.length;$('oncall-cards').replaceChildren(...weekend);
  $('check-pdf').hidden=expandedDay!==null;
- const estimate=Timesheet.estimatedRecovery(store);
- overtimeValue.textContent=signedMinutes(estimate.known?estimate.available:estimate.change);
- overtimeNote.textContent=estimate.known?`Estimation sur 35 h par semaine${estimate.planned?' · '+fmt(estimate.planned)+' de RTT prévus réservés':''}`:`Depuis le ${new Date(estimate.startDate+'T12:00:00').toLocaleDateString('fr-FR')} · ancien solde à renseigner${estimate.planned?' · RTT prévus : '+fmt(estimate.planned):''}`;
+ const dailyExtra=days().slice(0,5).reduce((minutes,day)=>minutes+Timesheet.dayOvertime(day),0);
+ overtimeValue.textContent=fmt(dailyExtra);
+ overtimeNote.textContent='Semaine affichée · somme des dépassements de 8 h par jour';
 }
 function dayCard(day,index){
  const card=node('details',null,'week-card'),summary=node('summary'),heading=node('div',null,'card-heading');
@@ -56,7 +56,9 @@ function dayCard(day,index){
  const clients=node('p',day.length?[...new Set(day.map(item=>item.client||'Sans client'))].join(', '):'À remplir','card-clients');
  const issues=SheetReview.dayIssues(day),state=!day.length?'empty':issues.length?'check':'ok';
  const right=node('div',null,'card-right'),indicator=node('span',state==='empty'?'Vide':state==='check'?'À vérifier':'OK','card-state');indicator.dataset.state=state;
- right.append(node('strong',fmt(daySum(day))),indicator);summary.append(heading,clients,right);card.append(summary);card.dataset.day=String(index);
+ right.append(node('strong',fmt(daySum(day))),indicator);
+ const extra=Timesheet.dayOvertime(day);if(extra)right.append(node('span',fmt(extra)+' sup dans la journée','card-state'));
+ summary.append(heading,clients,right);card.append(summary);card.dataset.day=String(index);
  card.open=expandedDay===index;
  if(card.open){card.append(dayPanel);dayPanel.hidden=false;}
  summary.onclick=event=>{event.preventDefault();expandedDay=expandedDay===index?null:index;if(expandedDay!==null)selected=index;render();};

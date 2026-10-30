@@ -140,12 +140,12 @@ def export_ods(data):
 
         put(cells(rows[1])[0], 'Nom du technicien : ' + data['name'].strip())
         put(cells(rows[2])[0], f'Semaine du {start:%d/%m/%Y} au {start + timedelta(days=6):%d/%m/%Y}')
-        cumulative = 0
         for day_index, day in enumerate(data['days']):
+            cumulative = 0
             for index, item in enumerate(day):
                 line = cells(rows[5 + day_index * 8 + index])
                 minutes = sum(item[k] for k in FIELDS)
-                overtime = max(0, cumulative + minutes - 2100) - max(0, cumulative - 2100)
+                overtime = max(0, cumulative + minutes - 480) - max(0, cumulative - 480)
                 cumulative += minutes
                 values = [item['client'], item['city'], '', '', str(item['travel']) if item['travel'] else '',
                           *[duration(item[k]) for k in FIELDS[1:]], duration(minutes), duration(overtime)]

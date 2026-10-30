@@ -55,7 +55,7 @@ Réglages → Mon planning d’école permet de marquer les dates prévues (lund
 
 Le samedi et le dimanche sont conservés en données, notamment pour le décompte des congés existant. Les interventions de week-end apparaissent dans un bloc Astreinte séparé. Le PDF Cloudflare contient uniquement lundi à vendredi ; toute entrée de week-end est signalée avant export et reste conservée en données. L’ODS et l’hébergement Python historique conservent leur modèle sur sept jours.
 
-Dans les exports, H.SUP est désormais le dépassement de 35 h **sur la semaine entière**, réparti sur les dernières lignes, sans additionner les dépassements quotidiens. Le repère de 8 h dans Ma journée reste un objectif journalier, pas le calcul du crédit.
+Dans les exports, H.SUP indique le dépassement de **8 h par journée**, selon la précision de l’utilisateur. Les lignes d’un même jour sont cumulées et le seuil repart le lendemain : 9 h donnent 1 h ; 6 h donnent zéro. L’accueil additionne ces dépassements pour la semaine affichée. Le suivi de récupération sur le contrat de 35 h reste distinct, dans le récapitulatif mensuel.
 
 ## Partage, favoris et rappel
 
@@ -76,7 +76,7 @@ Choisir une semaine, puis ouvrir la carte d’un jour. Ajouter jusqu’à huit l
 - « Copier une journée » permet de choisir une semaine et un jour, puis de copier toutes ses lignes dans le jour sélectionné. Une journée déjà remplie n’est remplacée qu’après confirmation. La copie est indépendante de l’original.
 - L’historique liste les semaines non vides et leur total. Sélectionner une semaine permet de la revoir, la modifier ou télécharger à nouveau son PDF.
 
-Les trajets aller-retour sont saisis en minutes. Les autres durées acceptent `2h30`, `2:30` ou `2h` ; un nombre entier seul signifie des heures. Total = trajet + TPE + régie + chantier + SAV. Heures supplémentaires = maximum de zéro et total hebdomadaire moins 35 h ; elles ne sont pas ajoutées une seconde fois au total.
+Les trajets aller-retour sont saisis en minutes. Les autres durées acceptent `2h30`, `2:30` ou `2h` ; un nombre entier seul signifie des heures. Total = trajet + TPE + régie + chantier + SAV. H.SUP = maximum de zéro et total journalier moins 8 h ; ces heures ne sont pas ajoutées une seconde fois au total travaillé.
 
 ## Couleurs de l’application
 

@@ -3,11 +3,21 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { PDFDocument } from 'pdf-lib';
-import { createPdf } from '../cloudflare/export.mjs';
+import { createPdf, dailyOvertime } from '../cloudflare/export.mjs';
 import '../static/review.js';
 
 const entry=(overrides={})=>({client:'Client',city:'Perpignan',travel:0,tpe:480,regie:0,chantier:0,sav:0,...overrides});
 const week=()=>({name:'Test PDF',week:'2026-10-05',days:Array.from({length:7},(_,i)=>i<5?[entry()]:[])});
+test('H.SUP is daily: 8, 8, 8, 7, 6 h produces no daily overtime',()=>{
+ const hours=[8,8,8,7,6];
+ assert.deepEqual(hours.map(hours=>dailyOvertime([entry({tpe:hours*60})])[0]),[0,0,0,0,0]);
+ assert.deepEqual(dailyOvertime([entry({tpe:540})]),[60]);
+});
+test('daily H.SUP splits across entries and starts again on the following day',()=>{
+ assert.deepEqual(dailyOvertime([entry({tpe:480}),entry({tpe:30}),entry({tpe:30})]),[0,30,30]);
+ assert.deepEqual(dailyOvertime([entry({tpe:60}),entry({tpe:420})]),[0,0]);
+ assert.deepEqual(dailyOvertime([entry({tpe:540})]),[60]);
+});
 test('review: empty days, missing bons and long days; workshop and absences are exempt from bons',()=>{
  assert.equal(SheetReview.dayIssues([]).length,1);
  assert.match(SheetReview.dayIssues([entry()])[0],/numéro de bon/);

@@ -4,6 +4,7 @@
  const dateKey=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T00:00:00Z'))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s;
  const fields=['travel','tpe','regie','chantier','sav'];
  const dayTotal=day=>day.reduce((n,item)=>n+fields.reduce((m,k)=>m+item[k],0),0);
+ const dayOvertime=day=>Math.max(0,dayTotal(day)-480);
  const weekEnd=week=>{const d=new Date(week+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+4);return d.toISOString().slice(0,10);};
  const weekOvertime=days=>Math.max(0,days.reduce((n,d)=>n+dayTotal(d),0)-2100);
  const clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
@@ -99,5 +100,5 @@
    return extras(result);
   }catch{return null;}
  }
- globalThis.Timesheet=Object.freeze({extras,monthSummary,signature,sentStatus,merge,dayTotal,weekOvertime,weekEnd,creditValid,recoverySummary,estimatedRecovery});
+ globalThis.Timesheet=Object.freeze({extras,monthSummary,signature,sentStatus,merge,dayTotal,dayOvertime,weekOvertime,weekEnd,creditValid,recoverySummary,estimatedRecovery});
 })();

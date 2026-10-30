@@ -1,6 +1,8 @@
 # Nouvelle feuille de semaine
 
-Le contrat de 35 h a été confirmé par l’utilisateur. L’accueil affiche maintenant une estimation automatique des heures à récupérer : dépassements hebdomadaires saisis, moins les RTT pris (8 h par journée déjà définie dans l’application). Les RTT futurs restent réservés séparément. Les saisies futures ne créent pas de crédit. Un montant confirmé pour une semaine remplace son calcul automatique ; une correction recalcule cette semaine sans doublon. Le calcul reste une estimation à comparer au décompte de la secrétaire, sans inventer de majoration ni de prime.
+L’utilisateur a précisé le calcul attendu par journée : 9 h donnent 1 h supplémentaire ; 6 h donnent zéro. L’accueil et la colonne H.SUP des exports additionnent uniquement les dépassements de 8 h par journée. Une semaine de 8 h, 8 h, 8 h, 7 h et 6 h donne donc zéro dans cet affichage journalier. Dans le PDF, une case H.SUP vide signifie zéro. Plusieurs lignes d’une même journée sont additionnées avant d’appliquer le seuil de 8 h ; le seuil repart à zéro le lendemain.
+
+Le compteur de récupération dans le récapitulatif mensuel reste séparé, avec le contrat de 35 h confirmé par l’utilisateur : dépassements hebdomadaires saisis, moins les RTT pris (8 h par journée déjà définie dans l’application). Les RTT futurs restent réservés séparément. Les saisies futures ne créent pas de crédit. Un montant confirmé pour une semaine remplace son calcul automatique ; une correction recalcule cette semaine sans doublon. Ce suivi reste une estimation à comparer au décompte de la secrétaire, sans inventer de majoration ni de prime.
 
 Pour inclure les anciennes heures, ouvrir Réglages → Mon récapitulatif mensuel → Renseigner mon solde de départ : choisir la date de début et, s’il est connu, le solde à cette date. Quand le départ est inconnu, l’accueil montre quand même les mouvements suivis avec leur date de début, sans les présenter comme le solde total. L’historique et le point de départ restent conservés.
 
@@ -17,7 +19,7 @@ La mise à jour s’installe par GitHub, puis par le déploiement Cloudflare dé
 7. Une intervention de week-end reste dans les données et apparaît dans le bloc Astreinte. Ses heures ne sont pas déplacées vers un autre jour et ne sont pas ajoutées au PDF du lundi au vendredi. Pour ajouter une nouvelle intervention de week-end : Réglages → Ajouter une intervention le week-end.
 8. Réglages → Mon récapitulatif mensuel : heures, dépassement hebdomadaire déjà utilisé par l’application et détail des interventions de week-end. Ces dernières sont déjà incluses dans les heures saisies : le détail ne les additionne pas une deuxième fois. Aucune prime d’astreinte n’est inventée.
 
-Les calculs existants sont conservés : minutes de trajet + TPE + régie + chantier + SAV ; dépassement actuel après 35 h par semaine. Ce paramétrage existant ne constitue pas une validation de la règle de paie de l’employeur. Les lignes ne portent pas de date autonome : la référence est leur semaine enregistrée et le jour auquel elles appartiennent, jamais le nom ancien d’un modèle ni la date du téléchargement.
+Le total travaillé conserve la formule minutes de trajet + TPE + régie + chantier + SAV. H.SUP indique le dépassement de 8 h par jour demandé par l’utilisateur ; le suivi de récupération sur 35 h reste dans le récapitulatif mensuel. Ce paramétrage ne constitue pas une validation de la règle de paie de l’employeur. Les lignes ne portent pas de date autonome : la référence est leur semaine enregistrée et le jour auquel elles appartiennent, jamais le nom ancien d’un modèle ni la date du téléchargement.
 
 ## Envoi automatique et classement Drive
 

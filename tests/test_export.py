@@ -33,18 +33,25 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(self.text(rows[5], 12), '8 h 00')
         self.assertEqual(self.text(rows[5], 13), '')
         self.assertEqual(self.text(rows[6], 12), '0 h 30')
-        self.assertEqual(self.text(rows[6], 13), '')
+        self.assertEqual(self.text(rows[6], 13), '0 h 30')
         for row in rows[5:7]:
             self.assertEqual(self.text(row, 5), '')
             self.assertEqual(self.text(row, 6), '')
         self.assertEqual(list(rows[5])[0].get(f'{{{T}}}number-rows-spanned'), '8')
 
-    def test_overtime_after_35_hours_across_week(self):
-        self.data['days'] = [[dict(self.item, travel=0, tpe=0, chantier=480)] for _ in range(4)] + [[dict(self.item, travel=0, tpe=0, chantier=420)], [], []]
+    def test_37_hour_week_has_no_daily_overtime(self):
+        self.data['days'] = [[dict(self.item, travel=0, tpe=0, chantier=h*60)] for h in [8, 8, 8, 7, 6]] + [[], []]
         rows = self.sheet(self.data)
         self.assertEqual(self.text(rows[5], 13), '')
         self.assertEqual(self.text(rows[29], 13), '')
-        self.assertEqual(self.text(rows[37], 13), '4 h 00')
+        self.assertEqual(self.text(rows[37], 13), '')
+
+    def test_nine_hour_day_has_one_hour_then_resets_next_day(self):
+        self.data['days'] = [[dict(self.item, travel=0, tpe=0, chantier=h*60)] for h in [9, 8, 8, 7, 6]] + [[], []]
+        rows = self.sheet(self.data)
+        self.assertEqual(self.text(rows[5], 13), '1 h 00')
+        self.assertEqual(self.text(rows[13], 13), '')
+        self.assertEqual(self.text(rows[37], 13), '')
 
     def test_eighth_sunday_slot(self):
         self.data['days'][6] = [dict(self.item, travel=0, tpe=0, chantier=60)] * 8
