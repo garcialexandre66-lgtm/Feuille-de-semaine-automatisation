@@ -8,9 +8,13 @@ La durée de connexion et le stockage du code personnel restent inchangés. Ferm
 
 ## Préparer l’envoi dans Gmail
 
-« Envoyer par Gmail », sous le téléchargement, vérifie la feuille puis prépare son PDF. Sur un téléphone compatible, « Partager le PDF » ouvre le partage du fichier : choisir Gmail et renseigner `s.sanchez@asc66.fr`, affichée dans la fenêtre. Le PDF est transmis au menu de partage seulement après cet appui.
+« Envoyer par Gmail », sous le téléchargement, vérifie la feuille puis prépare son PDF. « Ouvrir le brouillon dans l’application » télécharge le PDF et ouvre l’application mail choisie sur le téléphone, avec `s.sanchez@asc66.fr` dans le champ À, la semaine dans l’objet et exactement ce texte, sans adresse dans le corps :
 
-L’autre option, « Ouvrir Gmail et télécharger le PDF », télécharge le fichier puis ouvre un brouillon Gmail avec `s.sanchez@asc66.fr`, la bonne semaine et le texte du message déjà remplis. Appuyer sur le trombone dans Gmail pour joindre le PDF téléchargé, puis sur Envoyer. Un lien vers Gmail ne peut pas joindre automatiquement un fichier local ; l’interface indique cette étape. Aucun message n’est envoyé tout seul et aucun accès Google supplémentaire n’est nécessaire pour ce bouton.
+Bonjour,\
+Voici ma feuille de semaine en piece jointe.\
+Garcia Alexandre
+
+« Ouvrir le brouillon dans Gmail sur le web » offre le même destinataire et le même texte dans Gmail. Pour ces deux options, appuyer sur le trombone pour joindre le PDF téléchargé, puis sur Envoyer. Un lien ne peut pas joindre automatiquement un fichier local ; l’interface indique cette étape. L’option repliée « partager le PDF joint » conserve le partage du fichier sur téléphone, avec le même texte exact, mais demande de renseigner le destinataire dans Gmail. Aucun message n’est envoyé tout seul et aucun accès Google supplémentaire n’est nécessaire pour ces boutons.
 
 ## Total et compteur
 
