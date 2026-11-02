@@ -194,22 +194,49 @@ weekendForm.onsubmit=event=>{event.preventDefault();const date=weekendDate.value
 // In the daily editor, less common actions live behind one disclosure.
 const choices=dayPanel.querySelector('.day-more');
 choices.querySelector('.day-tools').prepend($('workshop-day'));choices.hidden=true;
-const dayActionBox=node('div',null,'day-action-box'),dayActionLabel=node('label','Autres choix pour cette journée'),dayActionRow=node('div',null,'day-action-row'),dayActionSelect=node('select'),dayActionApply=node('button','Continuer');
-dayActionSelect.id='day-action-select';dayActionLabel.htmlFor=dayActionSelect.id;dayActionApply.id='day-action-apply';dayActionApply.type='button';dayActionApply.disabled=true;
+const dayActionToggle=node('button',null,'day-action-toggle'),dayActionMenu=node('div',null,'day-action-menu');
+dayActionToggle.id='day-action-toggle';dayActionToggle.type='button';
+dayActionToggle.append(node('span','Autres choix'),node('span','⌄','day-action-chevron'));
+dayActionToggle.lastChild.setAttribute('aria-hidden','true');
+dayActionMenu.id='day-action-menu';dayActionMenu.hidden=true;dayActionMenu.setAttribute('role','group');dayActionMenu.setAttribute('aria-label','Actions pour cette journée');
+dayActionToggle.setAttribute('aria-controls',dayActionMenu.id);dayActionToggle.setAttribute('aria-expanded','false');
+choices.after(dayActionToggle);document.body.append(dayActionMenu);
 const dayActionIds=['workshop-day','copy-day','leave','sick','recovery-day'];
-const dayActionPlaceholder=node('option','Choisir une action…');dayActionPlaceholder.value='';dayActionPlaceholder.disabled=true;dayActionPlaceholder.selected=true;
-dayActionSelect.append(dayActionPlaceholder);
-for(const id of dayActionIds){const option=node('option',$(id).textContent);option.value=id;dayActionSelect.append(option);}
-dayActionRow.append(dayActionSelect,dayActionApply);dayActionBox.append(dayActionLabel,dayActionRow);choices.after(dayActionBox);
-function resetDayAction(){
- dayActionSelect.value='';dayActionApply.disabled=true;
- for(const option of dayActionSelect.options)if(option.value)option.disabled=!!$(option.value).disabled;
+for(const id of dayActionIds){
+ const button=node('button',$(id).textContent);button.type='button';button.dataset.action=id;
+ button.onclick=()=>{if($(id).disabled)return;closeDayAction();dayActionToggle.focus();$(id).click();};
+ dayActionMenu.append(button);
 }
-dayActionSelect.onchange=()=>{dayActionApply.disabled=!dayActionIds.includes(dayActionSelect.value)||$(dayActionSelect.value).disabled;};
-dayActionApply.onclick=()=>{
- const id=dayActionSelect.value;if(!dayActionIds.includes(id)||$(id).disabled)return;
- resetDayAction();$(id).click();
+function closeDayAction(focus=false){
+ dayActionMenu.hidden=true;dayActionToggle.setAttribute('aria-expanded','false');
+ if(focus)dayActionToggle.focus();
+}
+function resetDayAction(){
+ closeDayAction();
+ for(const button of dayActionMenu.querySelectorAll('button'))button.disabled=!!$(button.dataset.action).disabled;
+}
+function openDayAction(focus=false){
+ resetDayAction();dayActionMenu.hidden=false;dayActionToggle.setAttribute('aria-expanded','true');
+ const rect=dayActionToggle.getBoundingClientRect(),gap=8;
+ dayActionMenu.style.width=Math.min(rect.width,window.innerWidth-24)+'px';
+ dayActionMenu.style.left=Math.max(12,Math.min(rect.left,window.innerWidth-dayActionMenu.offsetWidth-12))+'px';
+ const below=window.innerHeight-rect.bottom-gap-12,above=rect.top-gap-12;
+ const top=below>=dayActionMenu.scrollHeight||below>=above;
+ dayActionMenu.style.maxHeight=Math.max(80,top?below:above)+'px';
+ dayActionMenu.style.top=(top?rect.bottom+gap:Math.max(12,rect.top-gap-dayActionMenu.offsetHeight))+'px';
+ if(focus)dayActionMenu.querySelector('button:not(:disabled)')?.focus();
+}
+dayActionToggle.onclick=()=>dayActionMenu.hidden?openDayAction():closeDayAction();
+dayActionToggle.onkeydown=event=>{if(event.key==='ArrowDown'){event.preventDefault();openDayAction(true);}};
+dayActionMenu.onkeydown=event=>{
+ const buttons=[...dayActionMenu.querySelectorAll('button:not(:disabled)')],index=buttons.indexOf(document.activeElement);
+ if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();buttons[(index+(event.key==='ArrowDown'?1:buttons.length-1))%buttons.length]?.focus();}
 };
+document.addEventListener('pointerdown',event=>{if(!dayActionMenu.contains(event.target)&&!dayActionToggle.contains(event.target))closeDayAction();});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!dayActionMenu.hidden){event.preventDefault();closeDayAction(true);}});
+document.addEventListener('focusin',event=>{if(!dayActionMenu.contains(event.target)&&!dayActionToggle.contains(event.target))closeDayAction();});
+window.addEventListener('resize',()=>closeDayAction());
+window.addEventListener('scroll',event=>{if(!dayActionMenu.contains(event.target))closeDayAction();},true);
 
 $('previous-day').hidden=true;$('next-day').hidden=true;
 const gmailButton=node('button','Envoyer par Gmail','gmail-button');gmailButton.id='gmail-pdf';gmailButton.type='button';gmailButton.onclick=()=>reviewPdf('gmail');$('simple-home').querySelector('.download-bar').append(gmailButton);

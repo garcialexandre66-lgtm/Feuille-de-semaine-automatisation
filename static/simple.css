@@ -43,10 +43,11 @@ header .header-actions #refresh-app{color:#202a3a;background:#fff;border:1px sol
 
 header .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}header .brand-logo{display:block;width:40px;height:40px;flex:none;border-radius:11px}@media(max-width:380px){header .brand{gap:8px;font-size:14px}header .brand-logo{width:34px;height:34px;border-radius:9px}}
 
-.day-action-box{margin:18px 0 0;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--paper)}
-.day-action-box>label{display:block;margin:0 0 8px;font-size:14px;font-weight:600}
-.day-action-row{display:flex;align-items:stretch;gap:8px}
-.day-action-row select{width:100%;min-width:0;flex:1;min-height:48px;margin:0;padding:10px 32px 10px 12px;border:1px solid var(--border);border-radius:10px;background-color:white;color:var(--ink);font:inherit;font-size:15px}
-.day-action-row button{flex:none;margin:0;font-size:14px}
-.day-action-row select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-@media(max-width:380px){.day-action-row{flex-direction:column}.day-action-row button{width:100%}}
+.day-action-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:50px;margin:16px 0 0;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--accent);font-weight:650;font-size:15px;box-shadow:0 2px 6px #17243f06}
+.day-action-toggle:hover,.day-action-toggle[aria-expanded="true"]{background:var(--paper);border-color:var(--accent)}
+.day-action-chevron{font-size:22px;line-height:1;transition:transform .15s ease}
+.day-action-toggle[aria-expanded="true"] .day-action-chevron{transform:rotate(180deg)}
+.day-action-menu{position:fixed;z-index:1000;box-sizing:border-box;overflow-y:auto;margin:0;padding:6px;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 12px 36px #17243f26}
+.day-action-menu button{display:block;width:100%;min-height:48px;padding:12px;text-align:left;white-space:normal;border:0;border-radius:8px;background:#fff;color:var(--ink);font-size:15px;font-weight:500;box-shadow:none}
+.day-action-menu button+button{margin-top:2px}
+.day-action-menu button:hover,.day-action-menu button:focus-visible{background:var(--paper);color:var(--accent)}
