@@ -51,6 +51,15 @@ def validate(data):
 
 
 def validate_extras(state):
+    for field, limit in [('completedDays', 8), ('learningNotes', 2000)]:
+        values = state.get(field, {})
+        if not isinstance(values, dict) or len(values) > 7000:
+            raise ValueError('Suivi des journées invalide.')
+        for key, value in values.items():
+            if not isinstance(key, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', key) or date.fromisoformat(key).isoformat() != key or not isinstance(value, str) or len(value) > limit:
+                raise ValueError('Note ou journée terminée invalide.')
+            if field == 'completedDays' and not re.fullmatch(r'[a-f0-9]{8}', value):
+                raise ValueError('Journée terminée invalide.')
     for name in ('weekMeta', 'monthNotes', 'preferences'):
         if not isinstance(state.get(name, {}), dict):
             raise ValueError('Réglages invalides.')

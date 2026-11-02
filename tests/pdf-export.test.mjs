@@ -18,9 +18,9 @@ test('daily H.SUP splits across entries and starts again on the following day',(
  assert.deepEqual(dailyOvertime([entry({tpe:60}),entry({tpe:420})]),[0,0]);
  assert.deepEqual(dailyOvertime([entry({tpe:540})]),[60]);
 });
-test('review: empty days, missing bons and long days; workshop and absences are exempt from bons',()=>{
+test('review: empty and long days are explained; bon numbers remain optional for apprentices',()=>{
  assert.equal(SheetReview.dayIssues([]).length,1);
- assert.match(SheetReview.dayIssues([entry()])[0],/numéro de bon/);
+ assert.equal(SheetReview.dayIssues([entry()]).length,0);
  assert.equal(SheetReview.dayIssues([entry({prep:'BP42'})]).length,0);
  assert.equal(SheetReview.dayIssues([entry({intervention:'BI42'})]).length,0);
  assert.equal(SheetReview.dayIssues([entry({workplace:'atelier'})]).length,0);

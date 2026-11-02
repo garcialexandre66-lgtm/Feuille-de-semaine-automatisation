@@ -39,7 +39,7 @@ function render(){
  $('dayremaining').textContent=onLeave?ds[selected][0].client:totals[selected]===480?'Objectif de 8 h atteint':totals[selected]>480?`${fmt(totals[selected]-480)} au-delà de l’objectif de 8 h`:`${fmt(480-totals[selected])} pour atteindre 8 h`;
  $('progress').style.width=`${Math.min(totals[selected]/480*100,100)}%`;
  $('entries').replaceChildren();
- ds[selected].forEach((item,i)=>{const el=node('article',null,'entry'), info=node('div');el.dataset.kind=item.kind||item.workplace||'client';info.append(node('h3',item.client||'Temps pour l’entreprise'));if(item.city)info.append(node('p',item.city));info.append(node('p',fields.flatMap((k,j)=>item[k]?[`${labels[j]} : ${fmt(item[k])}`]:[]).join(' · ')));const actions=node('div',null,'actions');actions.append(node('strong',fmt(sum(item))));const edit=node('button','Modifier');edit.onclick=()=>openEditor(i);const remove=node('button','Supprimer');remove.onclick=()=>{if(confirm('Supprimer cette intervention ?')){ds[selected].splice(i,1);save();render();}};if(!isAbsence(item))actions.append(edit);actions.append(remove);el.append(info,actions);$('entries').append(el);});
+ ds[selected].forEach((item,i)=>{const el=node('article',null,'entry'), info=node('div');el.dataset.kind=item.kind||item.workplace||'client';info.append(node('h3',item.client||'Temps pour l’entreprise'));if(item.city)info.append(node('p',item.city));info.append(node('p',fields.flatMap((k,j)=>item[k]?[`${labels[j]} : ${fmt(item[k])}`]:[]).join(' · ')));const actions=node('div',null,'actions');actions.append(node('strong',fmt(sum(item))));const edit=node('button','Modifier');edit.type='button';edit.onclick=()=>openEditor(i);const hours=node('button','Heures');hours.type='button';hours.className='edit-hours';hours.onclick=()=>openQuickHours(i,el);const remove=node('button','Supprimer');remove.type='button';remove.onclick=()=>deleteEntry(i);if(!isAbsence(item))actions.append(hours,edit);actions.append(remove);el.append(info,actions);$('entries').append(el);});
  if(!ds[selected].length){const empty=node('div',null,'empty');empty.append(node('b','Une journée à remplir'),node('div','Ajoutez un chantier, un déplacement ou du temps au dépôt.'));$('entries').append(empty);}
  $('add').disabled=onLeave||ds[selected].length>=8;
  $('add').textContent=onLeave?'Retirez l’absence pour ajouter une intervention':'+ Ajouter mon travail';
@@ -157,17 +157,18 @@ $('workshop-day').onclick=()=>{
  store.weeks[week][selected]=[{client:'Atelier ASC',city:'',workplace:'atelier',travel:0,tpe:480,regie:0,chantier:0,sav:0}];save();render();
 };
 function copySources(){
- const destination=selectedDate(),sources=[];
+ const destination=selectedDate(),sources=[],query=$('copy-search').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr');
  for(const [key,weekDays] of Object.entries(store.weeks))weekDays.forEach((day,index)=>{
   if(!day.length)return;
   const date=new Date(key+'T12:00:00');date.setDate(date.getDate()+index);const value=iso(date);
   if(value===destination)return;
-  sources.push({value,date,day});
+  const text=day.map(item=>item.client+' '+item.city).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr');
+  if(!query||text.includes(query))sources.push({value,date,day});
  });
  const targetTime=Date.parse(destination+'T00:00:00Z');
  const distance=value=>Math.abs(Date.parse(value+'T00:00:00Z')-targetTime);
  sources.sort((a,b)=>distance(a.value)-distance(b.value)||a.value.localeCompare(b.value));
- const placeholder=node('option',sources.length?'Choisir une journée…':'Aucune autre journée remplie');placeholder.value='';placeholder.disabled=true;placeholder.selected=true;
+ const placeholder=node('option',sources.length?'Choisir une journée…':query?'Aucun client correspondant':'Aucune autre journée remplie');placeholder.value='';placeholder.disabled=true;placeholder.selected=true;
  $('copy-source').replaceChildren(placeholder,...sources.map(({value,date,day})=>{
   const clients=[...new Set(day.map(item=>item.client||'Sans client'))].join(', ');
   const option=node('option',date.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+' · '+clients+' · '+fmt(daySum(day)));
@@ -176,7 +177,7 @@ function copySources(){
  $('copy-source').value='';$('copy-preview').textContent='';
 }
 $('copy-day').onclick=()=>{
- copySources();$('copy-error').textContent='';
+ $('copy-search').value='';copySources();$('copy-error').textContent='';
  $('copy-target').textContent='Copier vers : '+new Date(selectedDate()+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
  $('copy-dialog').showModal();
 };
@@ -186,6 +187,7 @@ function copySourceDay(){
  const date=new Date(value+'T12:00:00');
  return store.weeks[monday(value)]?.[(date.getDay()+6)%7];
 }
+$('copy-search').oninput=()=>{copySources();$('copy-error').textContent='';};
 $('copy-source').onchange=()=>{
  $('copy-error').textContent='';
  const source=copySourceDay();

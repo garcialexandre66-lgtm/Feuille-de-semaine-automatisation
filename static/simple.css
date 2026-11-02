@@ -79,3 +79,41 @@ header .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}header
 #settings-dialog>button.settings-lock{display:block;width:100%;margin:16px 0 0;padding:12px;border:0;background:none;color:#667286;font-size:14px;font-weight:500;box-shadow:none}
 #settings-dialog .hint{font-size:13px;line-height:1.5}
 @media(max-width:380px){#settings-dialog{padding:20px}.settings-shortcuts button{padding:14px;font-size:14px}}
+
+/* Small everyday tools; the notes and favorite list remain folded. */
+.daily-tools{margin-top:18px;border-top:1px solid var(--border);padding-top:6px}
+.completion-label{display:flex;flex-direction:row;align-items:center;gap:10px;min-height:48px;margin:8px 0;font-size:15px;font-weight:600;cursor:pointer}
+.completion-label input{width:22px;height:22px;accent-color:var(--accent)}
+.completion-label:has(input:disabled){color:#8590a2;cursor:default}
+.daily-disclosure{border-top:1px solid var(--border);margin:0;padding:0}
+.daily-disclosure>summary{min-height:48px;padding:14px 0;font-size:14px;cursor:pointer;font-weight:550}
+.daily-disclosure textarea{resize:vertical;min-height:100px}
+.daily-disclosure label{display:block;font-size:14px;margin:8px 0}
+.daily-disclosure .hint{font-size:12px;line-height:1.5}
+.quick-favorite-list{display:grid;gap:8px;max-height:200px;overflow:auto;padding:0 2px 12px}
+.quick-favorite-list button{width:100%;text-align:left;font-size:14px;overflow-wrap:anywhere}
+.today-badge{display:inline-block!important;padding:3px 7px;border-radius:20px;background:var(--paper);color:var(--accent)!important;font-size:11px!important;font-weight:650;white-space:nowrap}
+.week-card.is-today{border-color:var(--accent)}
+.week-card[data-completed="true"] .card-state[data-state="ok"]{color:var(--accent);font-weight:650}
+.card-state[data-state="check"]{max-width:150px;white-space:normal;text-align:right;line-height:1.4}
+.quick-hours{padding:14px;margin-top:14px;border:1px solid var(--border);border-radius:12px;background:var(--paper)}
+.quick-hours-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quick-hours label{display:block;min-width:0;font-size:13px;text-transform:capitalize}
+.quick-hours input{margin-top:5px}
+.quick-hours [role="alert"]{color:#b42318;font-size:14px}
+.quick-hours-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:12px}
+.quick-hours-actions button{font-size:14px}
+#entries .actions{flex-wrap:wrap}
+#entries .actions strong{flex:1}
+.undo-bar{position:fixed;z-index:1500;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 24px);padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:white;box-shadow:0 8px 32px #17243f26;font-size:14px}
+.undo-bar span{min-width:0;overflow-wrap:anywhere}
+.undo-bar button{flex:none;min-height:44px;padding:8px 10px;border:0;color:var(--accent);font-size:14px}
+.pdf-overview-total{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px;border-radius:12px;background:var(--paper);font-size:14px}
+.pdf-overview-total>strong{font-size:25px;white-space:nowrap;color:var(--accent)}
+#review-overview ul{list-style:none;padding:0;margin:0}
+#review-overview li{display:grid;grid-template-columns:1fr auto;gap:5px 12px;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+#review-overview li>span{grid-column:1;color:#667286;overflow-wrap:anywhere}
+#review-overview li>strong:last-child{grid-column:2;grid-row:1/3;align-self:center;white-space:nowrap}
+#month-learning article{padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+#month-learning article p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+@media(max-width:380px){.quick-hours-grid{grid-template-columns:1fr}.card-heading{flex-wrap:wrap}.undo-bar{gap:4px;padding:8px}.pdf-overview-total{flex-direction:column;align-items:flex-start}}

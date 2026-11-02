@@ -14,6 +14,10 @@
   for(const [key,v] of Object.entries(s.recovery.weeks)){if(!dateKey(key)||new Date(key+'T00:00:00Z').getUTCDay()!==1||!object(v)||!['work','school'].includes(v.source)||!Number.isInteger(v.credit)||v.credit<0||v.credit>10080||!/^[a-f0-9]{8}$/.test(v.signature)||typeof v.confirmedAt!=='string'||!Number.isFinite(Date.parse(v.confirmedAt)))throw Error('Validation de récupération invalide.');}
   for(const [key,v] of Object.entries(s.schoolDates))if(!dateKey(key)||v!==true)throw Error('Planning école invalide.');
   s.weekMeta??={};s.monthNotes??={};s.favorites??=[];s.preferences??={fridayReminder:true};
+  s.completedDays??={};s.learningNotes??={};
+  if(!object(s.completedDays)||!object(s.learningNotes)||Object.keys(s.completedDays).length>7000||Object.keys(s.learningNotes).length>7000)throw Error('Suivi des journées invalide.');
+  for(const [key,value] of Object.entries(s.completedDays))if(!dateKey(key)||typeof value!=='string'||!/^[a-f0-9]{8}$/.test(value))throw Error('Journée terminée invalide.');
+  for(const [key,value] of Object.entries(s.learningNotes))if(!dateKey(key)||typeof value!=='string'||value.length>2000)throw Error('Note d’apprentissage invalide (2 000 caractères maximum).');
   if(!object(s.weekMeta)||!object(s.monthNotes)||!object(s.preferences)||!Array.isArray(s.favorites)||s.favorites.length>100)throw Error('Réglages ou favoris invalides.');
   for(const [key,value] of Object.entries(s.weekMeta))if(!dateKey(key)||!object(value)||typeof value.sentAt!=='string'||!Number.isFinite(Date.parse(value.sentAt))||!/^[a-f0-9]{8}$/.test(value.signature))throw Error('Statut de semaine invalide.');
   if(Object.keys(s.monthNotes).length>1200)throw Error('Trop de notes mensuelles.');
@@ -96,6 +100,7 @@
    result.schoolDates=map(base.schoolDates,local.schoolDates,remote.schoolDates);
    result.recovery={openingMinutes:choose(base.recovery?.openingMinutes??null,local.recovery?.openingMinutes??null,remote.recovery?.openingMinutes??null),startDate:choose(base.recovery?.startDate,local.recovery?.startDate,remote.recovery?.startDate),weeks:map(base.recovery?.weeks,local.recovery?.weeks,remote.recovery?.weeks)};
    result.weekMeta=map(base.weekMeta,local.weekMeta,remote.weekMeta);result.monthNotes=map(base.monthNotes,local.monthNotes,remote.monthNotes);result.preferences=map(base.preferences,local.preferences,remote.preferences);
+   result.completedDays=map(base.completedDays,local.completedDays,remote.completedDays);result.learningNotes=map(base.learningNotes,local.learningNotes,remote.learningNotes);
    const byId=list=>Object.fromEntries((list||[]).map(f=>[f.id,f]));result.favorites=Object.values(map(byId(base.favorites),byId(local.favorites),byId(remote.favorites)));
    return extras(result);
   }catch{return null;}

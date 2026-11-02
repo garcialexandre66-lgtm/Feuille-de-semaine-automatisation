@@ -119,15 +119,18 @@ function renderSimple(){
  overtimeValue.textContent=fmt(weekMinutes);
  overtimeStrip.classList.toggle('over-limit',extra>0);
  overtimeExtra.hidden=extra===0;overtimeExtra.textContent=extra?'+'+fmt(extra)+' d’heures sup':'';
- overtimeNote.textContent='Semaine affichée · base de 35 h';
+ overtimeNote.textContent=weekMinutes<2100?fmt(2100-weekMinutes)+' restantes pour atteindre 35 h':'Objectif de 35 h atteint';
+ renderDailyTools();
 }
 function dayCard(day,index){
  const card=node('details',null,'week-card'),summary=node('summary'),heading=node('div',null,'card-heading');
  const d=new Date(week+'T12:00:00');d.setDate(d.getDate()+index);
  heading.append(node('strong',names[index]),node('span',d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})));
+ if(iso(d)===iso(new Date())){heading.append(node('span','Aujourd’hui','today-badge'));card.classList.add('is-today');card.setAttribute('aria-current','date');}
  const clients=node('p',day.length?[...new Set(day.map(item=>item.client||'Sans client'))].join(', '):'À remplir','card-clients');
  const issues=SheetReview.dayIssues(day),state=!day.length?'empty':issues.length?'check':'ok';
- const right=node('div',null,'card-right'),indicator=node('span',state==='empty'?'Vide':state==='check'?'À vérifier':'OK','card-state');indicator.dataset.state=state;
+ const right=node('div',null,'card-right'),indicator=node('span',state==='empty'?'Vide':state==='check'?issues.join(' · '):isDayCompleted(iso(d),day)?'✓ Terminée':'OK','card-state');indicator.dataset.state=state;
+ card.dataset.completed=String(isDayCompleted(iso(d),day));
  right.append(node('strong',fmt(daySum(day))),indicator);
  const extra=Timesheet.dayOvertime(day);if(extra)right.append(node('span',fmt(extra)+' sup dans la journée','card-state'));
  summary.append(heading,clients,right);card.append(summary);card.dataset.day=String(index);
@@ -157,8 +160,8 @@ async function downloadChecked(payload,share=false){
 async function reviewPdf(share=false){
  const payload=checkedPayload();if(!payload)return;
  const issues=SheetReview.weekIssues(payload.days);
- if(!issues.length){await downloadChecked(payload,share);return;}
- pendingReview=payload;pendingShare=share;$('review-download').textContent=share==='gmail'?'Préparer l’envoi Gmail':share?'Continuer le partage':'Télécharger quand même';$('review-list').replaceChildren(...issues.map(issue=>node('li',issue.message)));$('review-dialog').showModal();
+ renderPdfOverview(payload);
+ pendingReview=payload;pendingShare=share;$('review-download').textContent=share==='gmail'?'Préparer l’envoi Gmail':share?'Continuer le partage':issues.length?'Télécharger quand même':'Télécharger le PDF';$('review-list').replaceChildren(...issues.map(issue=>node('li',issue.message)));$('review-clear').hidden=issues.length>0;$('review-dialog').showModal();
 }
 $('check-pdf').onclick=()=>reviewPdf();
 $('share-pdf').onclick=()=>{if($('settings-dialog').open)$('settings-dialog').close();return reviewPdf(true);};
