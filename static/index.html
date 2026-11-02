@@ -45,9 +45,34 @@
 </section>
 <div id="update-ready" class="reminder" hidden><span>Une mise à jour est disponible.</span><button id="reload-app">Actualiser l’application</button></div>
 </main>
-<dialog id="settings-dialog" aria-labelledby="settings-title"><div class="dialog-title"><h2 id="settings-title">Mes réglages</h2><button id="settings-close" aria-label="Fermer les réglages">✕</button></div><label>Mon nom sur la feuille<input id="name" maxlength="100" placeholder="Prénom et nom" autocomplete="name"></label><div class="settings-actions"><button id="open-month">Mon récapitulatif mensuel</button><button id="open-history">Retrouver une semaine</button></div>
-<details><summary>Envoi du vendredi et classement dans Drive</summary><p id="delivery-status">Connexion à vérifier.</p><button id="connect-google" type="button">Connecter Gmail et Drive</button><form id="delivery-form"><label>Envoyer à<input id="delivery-to" type="email" required autocomplete="email"></label><label>Me mettre en copie<input id="delivery-copy" type="email" required autocomplete="email"></label><label>Heure du vendredi · Paris<input id="delivery-time" type="time" value="17:00" required step="900"></label><label class="checkbox-label"><input id="delivery-enabled" type="checkbox"> Activer l’envoi automatique</label><button type="submit">Enregistrer</button></form><p id="delivery-message" role="status"></p><p class="hint">L’envoi attend une connexion Google et une semaine complète sans point à vérifier. Le PDF est classé dans Drive par mois.</p></details>
-<div class="settings-actions"><button id="school-open">Mon planning d’école</button><button id="favorites-open">Mes chantiers favoris</button></div><label class="checkbox-label"><input id="friday-enabled" type="checkbox" checked> Me rappeler ma feuille le vendredi dans l’application</label><button id="calendar-reminder">Ajouter aussi le rappel au calendrier du téléphone</button><p class="hint">Le calendrier pourra vous prévenir même lorsque l’application est fermée. Importez le rappel une seule fois.</p><details><summary>Sauvegardes et autres options</summary><div class="settings-actions"><button id="backup">Sauvegarder mes données</button><button id="restore">Importer une sauvegarde</button><input type="file" id="file" accept="application/json,.json" hidden></div></details><p class="hint" id="offline-help">Le mode hors connexion se prépare après votre connexion sur cet appareil.</p><button id="logout">Verrouiller mon espace</button></dialog>
+<dialog id="settings-dialog" aria-labelledby="settings-title">
+<div class="dialog-title"><h2 id="settings-title">Mes paramètres</h2><button id="settings-close" type="button" aria-label="Fermer les paramètres">✕</button></div>
+<label class="settings-name">Mon nom<input id="name" maxlength="100" placeholder="Prénom et nom" autocomplete="name"></label>
+<nav class="settings-shortcuts" aria-label="Mes raccourcis">
+<button id="open-month" type="button">Mes heures</button>
+<button id="open-history" type="button">Mes anciennes semaines</button>
+<button id="school-open" type="button">Mon planning d’école</button>
+<button id="favorites-open" type="button">Mes chantiers favoris</button>
+</nav>
+<details id="settings-more" class="settings-more"><summary>Plus d’options</summary>
+<details id="settings-reminders" name="settings-option"><summary>Mes rappels</summary>
+<label class="checkbox-label"><input id="friday-enabled" type="checkbox" checked> Me rappeler ma feuille le vendredi</label>
+<button id="calendar-reminder" type="button">Ajouter le rappel au calendrier</button>
+<p class="hint">Importez ce rappel une seule fois dans le calendrier du téléphone.</p>
+</details>
+<details id="settings-delivery" name="settings-option"><summary>Envoi automatique du vendredi</summary>
+<p id="delivery-status" role="status">Ouvrez cette rubrique pour vérifier la connexion.</p><button id="connect-google" type="button">Connecter Gmail et Drive</button>
+<form id="delivery-form"><label>Destinataire<input id="delivery-to" type="email" required autocomplete="email"></label><label>Mon adresse pour recevoir une copie<input id="delivery-copy" type="email" required autocomplete="email"></label><label>Heure d’envoi · heure de Paris<input id="delivery-time" type="time" value="17:00" required step="900"></label><label class="checkbox-label"><input id="delivery-enabled" type="checkbox"> Envoyer automatiquement le vendredi</label><button type="submit">Enregistrer</button></form>
+<p id="delivery-message" role="status"></p><p class="hint">La semaine doit être complète. Le PDF envoyé est aussi classé dans Drive.</p>
+</details>
+<details id="settings-documents" name="settings-option"><summary>PDF et autres actions</summary><div id="settings-document-actions" class="settings-option-actions"></div><p class="hint">« Marquer comme envoyée » met à jour le suivi sans envoyer de mail.</p></details>
+<details id="settings-backups" name="settings-option"><summary>Sauvegardes et connexion</summary>
+<div class="settings-option-actions"><button id="backup" type="button">Télécharger une sauvegarde</button><button id="restore" type="button">Importer une sauvegarde</button><input type="file" id="file" accept="application/json,.json" hidden></div>
+<div id="settings-connection"></div><p class="hint" id="offline-help">Le mode hors connexion se prépare après votre connexion sur cet appareil.</p>
+</details>
+</details>
+<button id="logout" class="settings-lock" type="button">Verrouiller mon espace</button>
+</dialog>
 <dialog id="review-dialog" aria-labelledby="review-title"><div class="dialog-title"><h2 id="review-title">À vérifier avant le PDF</h2><button id="review-close" aria-label="Fermer">✕</button></div><ul id="review-list"></ul><p class="hint">Les entrées du week-end restent enregistrées. Le PDF et ses totaux couvrent lundi à vendredi.</p><div class="review-actions"><button id="review-fix">Revenir à ma semaine</button><button id="review-download" class="primary">Télécharger quand même</button></div></dialog>
 <dialog id="month-dialog" aria-label="Mon récapitulatif mensuel"><div class="dialog-title"><h2>Mon récapitulatif</h2><button id="month-close" aria-label="Fermer">✕</button></div><div id="month-content"></div></dialog>
 <dialog id="history-dialog" aria-label="Mes anciennes semaines"><div class="dialog-title"><h2>Retrouver une semaine</h2><button id="history-close" aria-label="Fermer">✕</button></div><div id="history-content"></div></dialog>

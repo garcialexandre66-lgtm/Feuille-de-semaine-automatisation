@@ -165,8 +165,8 @@ $('share-pdf').onclick=()=>{if($('settings-dialog').open)$('settings-dialog').cl
 for(const id of ['review-close','review-fix'])$(id).onclick=()=>{$('review-dialog').close();pendingReview=null;};
 $('review-download').onclick=async()=>{const payload=pendingReview,share=pendingShare;pendingReview=null;pendingShare=false;$('review-dialog').close();if(payload)await downloadChecked(payload,share);};
 $('review-dialog').addEventListener('cancel',()=>{pendingReview=null;});
-$('settings-dialog').prepend($('application').querySelector('.account-bar'));
-$('settings-dialog').append($('mark-sent'),$('share-pdf'),$('export-ods'));
+$('settings-connection').append($('application').querySelector('.account-bar'));
+$('settings-document-actions').append($('share-pdf'),$('mark-sent'),$('export-ods'));
 $('history-content').append($('history-list'));
 $('month-content').append($('view-month'));$('view-month').hidden=false;
 const monthlyOncall=node('p');monthlyOncall.id='monthly-oncall';$('view-month').append(monthlyOncall);
@@ -186,7 +186,7 @@ $('open-month').onclick=openMonth;$('month-close').onclick=()=>{$('month-dialog'
 $('month-dialog').addEventListener('close',()=>{currentView='day';});
 $('open-history').onclick=()=>{$('settings-dialog').close();renderHistory();$('history-dialog').showModal();};
 $('history-close').onclick=()=>$('history-dialog').close();
-const weekendButton=node('button','Ajouter une intervention le week-end');weekendButton.type='button';$('settings-dialog').append(weekendButton);
+const weekendButton=node('button','Ajouter une intervention le week-end');weekendButton.type='button';$('settings-document-actions').append(weekendButton);
 const weekendDialog=node('dialog'),weekendTitle=node('h2','Intervention le week-end'),weekendForm=node('form'),weekendDate=document.createElement('input'),weekendLabel=node('label','Date de l’intervention');
 weekendDate.type='date';weekendDate.required=true;weekendLabel.append(weekendDate);const weekendActions=node('div',null,'review-actions'),weekendCancel=node('button','Annuler'),weekendNext=node('button','Continuer','primary'),weekendError=node('p');weekendError.setAttribute('role','alert');weekendCancel.type='button';weekendNext.type='submit';weekendActions.append(weekendCancel,weekendNext);weekendForm.append(weekendLabel,weekendError,weekendActions);weekendDialog.append(weekendTitle,weekendForm);document.body.append(weekendDialog);
 weekendButton.onclick=()=>{$('settings-dialog').close();const date=new Date(week+'T12:00:00');date.setDate(date.getDate()+5);weekendDate.value=iso(date);weekendError.textContent='';weekendDialog.showModal();};weekendCancel.onclick=()=>weekendDialog.close();
@@ -261,6 +261,12 @@ async function deliveryStatus(){
   if(data.last)$('delivery-message').textContent=data.last.message||data.last.status;
  }catch{$('delivery-status').textContent='Connexion nécessaire pour régler les envois.';}
 }
-const originalSettings=openSettings;openSettings=function(){originalSettings();deliveryStatus();};$('settings-open').onclick=openSettings;
+const originalSettings=openSettings;
+openSettings=function(){
+ for(const details of $('settings-dialog').querySelectorAll('details'))details.open=false;
+ originalSettings();$('settings-dialog').scrollTop=0;
+};
+$('settings-delivery').addEventListener('toggle',()=>{if($('settings-delivery').open)deliveryStatus();});
+$('settings-open').onclick=openSettings;
 $('connect-google').onclick=async()=>{try{const result=await api('/api/google/start',{});location.assign(result.url);}catch(error){$('delivery-message').textContent=error.message;}};
 $('delivery-form').onsubmit=async event=>{event.preventDefault();try{const result=await api('/api/delivery',{to:$('delivery-to').value,copy:$('delivery-copy').value,time:$('delivery-time').value,enabled:$('delivery-enabled').checked});$('delivery-message').textContent=result.message;}catch(error){$('delivery-message').textContent=error.message;}};

@@ -51,3 +51,31 @@ header .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}header
 .day-action-menu button{display:block;width:100%;min-height:48px;padding:12px;text-align:left;white-space:normal;border:0;border-radius:8px;background:#fff;color:var(--ink);font-size:15px;font-weight:500;box-shadow:none}
 .day-action-menu button+button{margin-top:2px}
 .day-action-menu button:hover,.day-action-menu button:focus-visible{background:var(--paper);color:var(--accent)}
+
+#settings-dialog{max-width:460px;padding:24px}
+#settings-dialog .dialog-title{margin-bottom:20px}
+#settings-dialog .settings-name{margin:0 0 22px;font-size:14px;color:#667286}
+#settings-dialog .settings-name input{margin-top:7px;color:var(--ink)}
+.settings-shortcuts{display:grid;grid-template-columns:1fr;gap:0;margin:0;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.settings-shortcuts button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:58px;padding:16px;text-align:left;border:0;border-radius:0;background:white;font-size:15px;font-weight:550;box-shadow:none}
+.settings-shortcuts button+button{border-top:1px solid var(--border)}
+.settings-shortcuts button::after{content:'›';color:#8590a2;font-size:23px;line-height:1}
+.settings-shortcuts button:hover{background:var(--paper)}
+#settings-dialog details.settings-more{margin:18px 0 0;padding:0;border-top:0}
+#settings-dialog .settings-more>summary{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:12px 2px;color:var(--accent);font-weight:600;font-size:15px;list-style:none}
+#settings-dialog .settings-more>summary::after{content:'+';font-size:22px;font-weight:400}
+#settings-dialog .settings-more[open]>summary::after{content:'−'}
+#settings-dialog summary::-webkit-details-marker{display:none}
+#settings-dialog .settings-more>details{margin:0;padding:0;border-top:1px solid var(--border)}
+#settings-dialog .settings-more>details>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px;list-style:none;font-size:14px;font-weight:550}
+#settings-dialog .settings-more>details>summary::after{content:'⌄';color:#8590a2}
+#settings-dialog .settings-more>details[open]>summary::after{content:'⌃'}
+#settings-dialog .settings-more>details[open]{padding-bottom:14px}
+#settings-dialog .settings-more button{font-size:14px}
+#settings-dialog .settings-option-actions{display:grid;gap:8px}
+#settings-dialog .settings-option-actions button{width:100%;text-align:left}
+#settings-dialog .account-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;padding:0;border:0;background:none;font-size:13px}
+#settings-dialog .account-bar button{font-size:13px;min-height:40px}
+#settings-dialog>button.settings-lock{display:block;width:100%;margin:16px 0 0;padding:12px;border:0;background:none;color:#667286;font-size:14px;font-weight:500;box-shadow:none}
+#settings-dialog .hint{font-size:13px;line-height:1.5}
+@media(max-width:380px){#settings-dialog{padding:20px}.settings-shortcuts button{padding:14px;font-size:14px}}
