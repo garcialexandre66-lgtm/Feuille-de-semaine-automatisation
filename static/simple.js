@@ -26,6 +26,33 @@ $('form').onsubmit=event=>{
 };
 // Keep the existing, tested calculations and entry editing in the expanded card.
 const dayPanel=$('view-day');
+// Reuse yesterday without sharing entry objects with the original day.
+function previousDaySource(){
+ const date=new Date(week+'T12:00:00');date.setDate(date.getDate()+selected-1);
+ const key=iso(date),sourceWeek=monday(key),index=(date.getDay()+6)%7;
+ const entries=store.weeks[sourceWeek]?.[index]||[];
+ return {date:key,entries:entries.filter(item=>!isAbsence(item))};
+}
+const repeatYesterday=node('button','Reprendre la journée d’hier','workshop-shortcut'),repeatYesterdayHelp=node('p',null,'hint');
+repeatYesterday.id='repeat-yesterday';repeatYesterday.type='button';repeatYesterdayHelp.id='repeat-yesterday-help';
+repeatYesterday.setAttribute('aria-describedby',repeatYesterdayHelp.id);
+$('add').after(repeatYesterday,repeatYesterdayHelp);
+function renderRepeatYesterday(){
+ const source=previousDaySource();
+ repeatYesterday.disabled=!source.entries.length;
+ const date=new Date(source.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'});
+ repeatYesterdayHelp.textContent=source.entries.length
+  ?'Reprendre '+date+' : client, chantier, trajet et heures. Vous pourrez ensuite les modifier.'
+  :'Aucune intervention à reprendre le '+date+'. Autres choix → Copier une journée permet de choisir une autre date.';
+}
+repeatYesterday.onclick=()=>{
+ const source=previousDaySource();if(!source.entries.length)return;
+ if(days()[selected].length&&!confirm('Remplacer les interventions de cette journée par celles d’hier ?'))return;
+ store.weeks[week][selected]=JSON.parse(JSON.stringify(source.entries));
+ save();render();
+ $('status').textContent='Journée reprise. Utilisez « Modifier » pour ajuster le chantier et les heures.';
+};
+
 const overtimeStrip=node('section',null,'overtime-strip'),overtimeInfo=node('div'),overtimeTitle=node('strong','Total de la semaine'),overtimeValue=node('strong'),overtimeNote=node('p');
 const overtimeFigure=node('div',null,'week-hours-figure'),overtimeExtra=node('p'),overtimeLink=node('a','Consulter vos heures sup','overtime-link');
 overtimeValue.id='automatic-overtime';overtimeNote.id='automatic-overtime-note';overtimeExtra.id='weekly-overtime-excess';overtimeExtra.setAttribute('aria-live','polite');overtimeLink.id='consult-overtime';overtimeLink.href='#heures-supplementaires';
@@ -36,6 +63,7 @@ $('validate-credit').textContent='Confirmer ce montant';
 $('validate-credit').closest('details').querySelector('summary').textContent='Corriger ou confirmer une semaine';
 function renderSimple(){
  if(!$('simple-home'))return;
+ renderRepeatYesterday();
  if(expandedDay>=5&&!days()[expandedDay].some(item=>!isAbsence(item)&&sum(item)>0))expandedDay=null;
  const date=new Date(week+'T12:00:00'),end=new Date(date);end.setDate(end.getDate()+4);
  const short=d=>d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
