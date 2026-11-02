@@ -7,7 +7,6 @@
   const issues=[];
   if(!day.length)issues.push('Journée vide');
   if(day.reduce((n,item)=>n+minutes(item),0)>600)issues.push('Plus de 10 h dans la journée');
-  day.forEach((item,index)=>{if(client(item)&&!(item.prep||'').trim()&&!(item.intervention||'').trim())issues.push(`Ligne ${index+1} : aucun numéro de bon`);});
   return issues;
  }
  function weekIssues(days){
