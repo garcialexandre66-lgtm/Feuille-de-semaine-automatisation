@@ -80,7 +80,7 @@ function renderRepeatYesterday(){
  const date=new Date(source.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'});
  repeatYesterdayHelp.textContent=source.entries.length
   ?'Reprendre '+date+' : client, chantier, trajet et heures. Vous pourrez ensuite les modifier.'
-  :'Aucune intervention à reprendre le '+date+'. Autres choix → Copier une journée permet de choisir une autre date.';
+  :'Aucune intervention à reprendre le '+date+'. Choisissez « Copier une journée » dans le menu ci-dessous pour une autre date.';
 }
 repeatYesterday.onclick=()=>{
  const source=previousDaySource();if(!source.entries.length)return;
@@ -101,6 +101,7 @@ $('validate-credit').closest('details').querySelector('summary').textContent='Co
 function renderSimple(){
  if(!$('simple-home'))return;
  renderRepeatYesterday();
+ resetDayAction();
  if(expandedDay>=5&&!days()[expandedDay].some(item=>!isAbsence(item)&&sum(item)>0))expandedDay=null;
  const date=new Date(week+'T12:00:00'),end=new Date(date);end.setDate(end.getDate()+4);
  const short=d=>d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
@@ -191,7 +192,25 @@ weekendDate.type='date';weekendDate.required=true;weekendLabel.append(weekendDat
 weekendButton.onclick=()=>{$('settings-dialog').close();const date=new Date(week+'T12:00:00');date.setDate(date.getDate()+5);weekendDate.value=iso(date);weekendError.textContent='';weekendDialog.showModal();};weekendCancel.onclick=()=>weekendDialog.close();
 weekendForm.onsubmit=event=>{event.preventDefault();const date=weekendDate.value,index=(new Date(date+'T12:00:00').getDay()+6)%7;if(index<5){weekendError.textContent='Choisissez un samedi ou un dimanche.';return;}week=monday(date);selected=index;if(days()[index].length>=8){weekendError.textContent='Cette journée contient déjà huit lignes.';return;}weekendDialog.close();expandedDay=index;render();openEditor();};
 // In the daily editor, less common actions live behind one disclosure.
-const choices=dayPanel.querySelector('.day-more');choices.querySelector('summary').textContent='Autres choix';choices.querySelector('.day-tools').prepend($('workshop-day'));
+const choices=dayPanel.querySelector('.day-more');
+choices.querySelector('.day-tools').prepend($('workshop-day'));choices.hidden=true;
+const dayActionBox=node('div',null,'day-action-box'),dayActionLabel=node('label','Autres choix pour cette journée'),dayActionRow=node('div',null,'day-action-row'),dayActionSelect=node('select'),dayActionApply=node('button','Continuer');
+dayActionSelect.id='day-action-select';dayActionLabel.htmlFor=dayActionSelect.id;dayActionApply.id='day-action-apply';dayActionApply.type='button';dayActionApply.disabled=true;
+const dayActionIds=['workshop-day','copy-day','leave','sick','recovery-day'];
+const dayActionPlaceholder=node('option','Choisir une action…');dayActionPlaceholder.value='';dayActionPlaceholder.disabled=true;dayActionPlaceholder.selected=true;
+dayActionSelect.append(dayActionPlaceholder);
+for(const id of dayActionIds){const option=node('option',$(id).textContent);option.value=id;dayActionSelect.append(option);}
+dayActionRow.append(dayActionSelect,dayActionApply);dayActionBox.append(dayActionLabel,dayActionRow);choices.after(dayActionBox);
+function resetDayAction(){
+ dayActionSelect.value='';dayActionApply.disabled=true;
+ for(const option of dayActionSelect.options)if(option.value)option.disabled=!!$(option.value).disabled;
+}
+dayActionSelect.onchange=()=>{dayActionApply.disabled=!dayActionIds.includes(dayActionSelect.value)||$(dayActionSelect.value).disabled;};
+dayActionApply.onclick=()=>{
+ const id=dayActionSelect.value;if(!dayActionIds.includes(id)||$(id).disabled)return;
+ resetDayAction();$(id).click();
+};
+
 $('previous-day').hidden=true;$('next-day').hidden=true;
 const gmailButton=node('button','Envoyer par Gmail','gmail-button');gmailButton.id='gmail-pdf';gmailButton.type='button';gmailButton.onclick=()=>reviewPdf('gmail');$('simple-home').querySelector('.download-bar').append(gmailButton);
 const gmailDialog=node('dialog'),gmailTitle=node('h2','Envoyer à la secrétaire'),gmailHeading=node('div',null,'dialog-title'),gmailClose=node('button','✕'),gmailRecipient=node('p','À : s.sanchez@asc66.fr'),gmailHelp=node('p',null,'hint'),gmailActions=node('div',null,'review-actions'),gmailApp=node('a','Ouvrir le brouillon dans l’application','gmail-compose primary'),gmailShare=node('button','Partager le PDF','primary'),gmailWeb=node('a','Ouvrir le brouillon dans Gmail sur le web','gmail-compose'),gmailMessage=node('p'),gmailShareDetails=node('details'),gmailShareNote=node('p','Cette option joint le PDF, mais tu dois renseigner le destinataire dans Gmail.','hint');

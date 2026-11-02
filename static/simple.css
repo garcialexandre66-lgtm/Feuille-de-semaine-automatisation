@@ -42,3 +42,11 @@ header .header-actions #refresh-app{color:#202a3a;background:#fff;border:1px sol
 @media(prefers-reduced-motion:reduce){.day-confirmation[open],.day-confirmation-check,.day-confirmation-check path{animation:none!important}}
 
 header .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}header .brand-logo{display:block;width:40px;height:40px;flex:none;border-radius:11px}@media(max-width:380px){header .brand{gap:8px;font-size:14px}header .brand-logo{width:34px;height:34px;border-radius:9px}}
+
+.day-action-box{margin:18px 0 0;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--paper)}
+.day-action-box>label{display:block;margin:0 0 8px;font-size:14px;font-weight:600}
+.day-action-row{display:flex;align-items:stretch;gap:8px}
+.day-action-row select{width:100%;min-width:0;flex:1;min-height:48px;margin:0;padding:10px 32px 10px 12px;border:1px solid var(--border);border-radius:10px;background-color:white;color:var(--ink);font:inherit;font-size:15px}
+.day-action-row button{flex:none;margin:0;font-size:14px}
+.day-action-row select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media(max-width:380px){.day-action-row{flex-direction:column}.day-action-row button{width:100%}}
