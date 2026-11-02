@@ -15,6 +15,12 @@
   for(const [key,v] of Object.entries(s.schoolDates))if(!dateKey(key)||v!==true)throw Error('Planning école invalide.');
   s.weekMeta??={};s.monthNotes??={};s.favorites??=[];s.preferences??={fridayReminder:true};
   s.completedDays??={};s.learningNotes??={};
+  s.dayTasks??={};
+  if(!object(s.dayTasks)||Object.keys(s.dayTasks).length>7000)throw Error('Liste de tâches invalide.');
+  for(const [date,tasks] of Object.entries(s.dayTasks)){
+   if(!dateKey(date)||!object(tasks)||Object.keys(tasks).length>50)throw Error('Liste de tâches invalide (50 maximum par jour).');
+   for(const [id,task] of Object.entries(tasks))if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(id)||['constructor','prototype'].includes(id)||!object(task)||typeof task.text!=='string'||!task.text.trim()||task.text.length>200||typeof task.done!=='boolean')throw Error('Tâche invalide.');
+  }
   if(!object(s.completedDays)||!object(s.learningNotes)||Object.keys(s.completedDays).length>7000||Object.keys(s.learningNotes).length>7000)throw Error('Suivi des journées invalide.');
   for(const [key,value] of Object.entries(s.completedDays))if(!dateKey(key)||typeof value!=='string'||!/^[a-f0-9]{8}$/.test(value))throw Error('Journée terminée invalide.');
   for(const [key,value] of Object.entries(s.learningNotes))if(!dateKey(key)||typeof value!=='string'||value.length>2000)throw Error('Note d’apprentissage invalide (2 000 caractères maximum).');
@@ -101,6 +107,7 @@
    result.recovery={openingMinutes:choose(base.recovery?.openingMinutes??null,local.recovery?.openingMinutes??null,remote.recovery?.openingMinutes??null),startDate:choose(base.recovery?.startDate,local.recovery?.startDate,remote.recovery?.startDate),weeks:map(base.recovery?.weeks,local.recovery?.weeks,remote.recovery?.weeks)};
    result.weekMeta=map(base.weekMeta,local.weekMeta,remote.weekMeta);result.monthNotes=map(base.monthNotes,local.monthNotes,remote.monthNotes);result.preferences=map(base.preferences,local.preferences,remote.preferences);
    result.completedDays=map(base.completedDays,local.completedDays,remote.completedDays);result.learningNotes=map(base.learningNotes,local.learningNotes,remote.learningNotes);
+   result.dayTasks={};for(const date of new Set([...Object.keys(base.dayTasks||{}),...Object.keys(local.dayTasks||{}),...Object.keys(remote.dayTasks||{})]))result.dayTasks[date]=map(base.dayTasks?.[date],local.dayTasks?.[date],remote.dayTasks?.[date]);
    const byId=list=>Object.fromEntries((list||[]).map(f=>[f.id,f]));result.favorites=Object.values(map(byId(base.favorites),byId(local.favorites),byId(remote.favorites)));
    return extras(result);
   }catch{return null;}

@@ -117,3 +117,38 @@ header .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}header
 #month-learning article{padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
 #month-learning article p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
 @media(max-width:380px){.quick-hours-grid{grid-template-columns:1fr}.card-heading{flex-wrap:wrap}.undo-bar{gap:4px;padding:8px}.pdf-overview-total{flex-direction:column;align-items:flex-start}}
+
+.calendar-shortcut{display:block;margin:0 0 16px auto;min-height:44px;padding:8px 14px;border-color:var(--border);background:white;color:var(--accent);font-size:14px}
+dialog.month-calendar{max-width:480px;padding:20px}
+.calendar-navigation{display:flex;align-items:center;gap:8px;margin:0 0 18px}
+.calendar-navigation>button{flex:none;min-width:44px;padding:6px;font-size:25px}
+.calendar-navigation input{flex:1;min-width:0;text-align:center;font-size:16px}
+.calendar-month-picker{position:relative;display:flex;flex-direction:row;justify-content:center;align-items:center;flex:1;min-width:0;min-height:48px;margin:0!important;border:1px solid var(--border);border-radius:9px;font-size:16px;font-weight:550;text-transform:capitalize}
+.calendar-month-picker input{position:absolute;inset:0;width:100%;height:100%;min-height:0;opacity:0;cursor:pointer}
+.calendar-month-picker:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.calendar-weekdays{margin:0 0 8px;text-align:center;color:#667286;font-size:12px}
+.calendar-day{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-height:64px;min-width:0;padding:9px 1px 6px;border:1px solid var(--border);border-radius:9px;background:#fff;font-weight:500}
+.calendar-number{font-size:17px;line-height:1}
+.calendar-status{font-size:9px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
+.calendar-day[data-kind="work"]{background:#edf3ff;color:#19449e;border-color:#cad9fb}
+.calendar-day[data-kind="school"]{background:#f2edfc;color:#634098;border-color:#ded1f1}
+.calendar-day[data-kind="absence"]{background:#fff3e5;color:#80511d;border-color:#f0dcc1}
+.calendar-day[aria-current="date"]{outline:2px solid var(--accent);outline-offset:1px}
+.calendar-day[aria-pressed="true"] .calendar-number{font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.calendar-complete{position:absolute;right:3px;top:2px;font-size:10px;font-weight:800}
+.calendar-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;font-size:11px;color:#667286}
+.calendar-legend span::before{content:'';display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:3px;border:1px solid var(--border);background:white}
+.calendar-legend [data-kind="work"]::before{background:#cad9fb}.calendar-legend [data-kind="school"]::before{background:#ded1f1}.calendar-legend [data-kind="absence"]::before{background:#f0dcc1}
+.calendar-today{display:block;width:100%;margin-top:16px;font-size:14px}
+.day-todo>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none}
+.day-todo>summary::-webkit-details-marker{display:none}.day-todo>summary::after{content:'⌄';color:#667286}.day-todo[open]>summary::after{content:'⌃'}
+.todo-count{margin-left:auto;font-size:12px;color:#667286;font-variant-numeric:tabular-nums}
+.todo-row{display:flex;align-items:center;gap:8px;min-height:48px;border-top:1px solid var(--border)}
+.todo-row label{display:flex;flex-direction:row;align-items:center;gap:10px;flex:1;min-width:0;min-height:48px;margin:0;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer}
+.todo-row label input{flex:none;width:21px;height:21px;accent-color:var(--accent)}
+.todo-row label span{overflow-wrap:anywhere;line-height:1.4}.todo-row[data-done="true"] label span{text-decoration:line-through;color:#667286}
+.todo-row>button{flex:none;min-height:44px;min-width:36px;padding:4px;border:0;background:none;color:#8590a2;font-size:14px}
+.todo-add{display:flex;gap:8px;align-items:stretch;margin:12px 0}.todo-add input{min-width:0;flex:1;font-size:14px}.todo-add button{flex:none;padding:10px;font-size:14px}
+.todo-error{color:#b42318;font-size:13px;line-height:1.4}
+@media(max-width:380px){dialog.month-calendar{padding:16px;width:calc(100% - 20px)}.calendar-weekdays,.calendar-grid{gap:3px}.calendar-day{min-height:60px;padding-top:9px}.calendar-number{font-size:16px}.calendar-status{font-size:8px}}

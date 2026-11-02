@@ -51,6 +51,15 @@ def validate(data):
 
 
 def validate_extras(state):
+    day_tasks = state.get('dayTasks', {})
+    if not isinstance(day_tasks, dict) or len(day_tasks) > 7000:
+        raise ValueError('Liste de tâches invalide.')
+    for key, tasks in day_tasks.items():
+        if not isinstance(key, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', key) or date.fromisoformat(key).isoformat() != key or not isinstance(tasks, dict) or len(tasks) > 50:
+            raise ValueError('Liste de tâches invalide.')
+        for task_id, task in tasks.items():
+            if not isinstance(task_id, str) or not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}', task_id) or task_id in ('constructor', 'prototype') or not isinstance(task, dict) or not isinstance(task.get('text'), str) or not task['text'].strip() or len(task['text']) > 200 or type(task.get('done')) is not bool:
+                raise ValueError('Tâche invalide.')
     for field, limit in [('completedDays', 8), ('learningNotes', 2000)]:
         values = state.get(field, {})
         if not isinstance(values, dict) or len(values) > 7000:

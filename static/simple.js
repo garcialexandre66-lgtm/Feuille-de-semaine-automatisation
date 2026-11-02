@@ -102,7 +102,6 @@ function renderSimple(){
  if(!$('simple-home'))return;
  renderRepeatYesterday();
  resetDayAction();
- if(expandedDay>=5&&!days()[expandedDay].some(item=>!isAbsence(item)&&sum(item)>0))expandedDay=null;
  const date=new Date(week+'T12:00:00'),end=new Date(date);end.setDate(end.getDate()+4);
  const short=d=>d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
  $('simple-week').textContent=`Semaine du ${short(date)} au ${short(end)}`;
@@ -111,8 +110,9 @@ function renderSimple(){
  $('application').append(dayPanel);dayPanel.hidden=true;
  const cards=days().slice(0,5).map((day,index)=>dayCard(day,index));
  $('week-cards').replaceChildren(...cards);
- const weekend=days().slice(5).flatMap((day,index)=>day.some(item=>!isAbsence(item)&&sum(item)>0)?[dayCard(day,index+5)]:[]);
+ const weekend=days().slice(5).flatMap((day,index)=>expandedDay===index+5||day.some(item=>!isAbsence(item)&&sum(item)>0)?[dayCard(day,index+5)]:[]);
  $('oncall').hidden=!weekend.length;$('oncall-cards').replaceChildren(...weekend);
+ $('oncall').querySelector('h2').textContent=days().slice(5).some(day=>day.some(item=>!isAbsence(item)&&sum(item)>0))?'Astreinte':'Week-end';
  $('check-pdf').hidden=expandedDay!==null;
  gmailButton.hidden=expandedDay!==null;
  const weekMinutes=days().reduce((minutes,day)=>minutes+daySum(day),0),extra=Math.max(0,weekMinutes-2100);

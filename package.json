@@ -9,11 +9,12 @@
     "deploy": "node cloudflare/check-config.mjs && npm run build && wrangler d1 migrations apply asc-semaines --remote && wrangler deploy",
     "db:local": "wrangler d1 migrations apply asc-semaines --local",
     "db:remote": "wrangler d1 migrations apply asc-semaines --remote",
-    "test": "node --test tests/cloudflare.test.mjs tests/pdf-export.test.mjs tests/delivery.test.mjs tests/automatic-recovery.test.mjs tests/everyday.test.mjs",
+    "test": "node --test tests/cloudflare.test.mjs tests/pdf-export.test.mjs tests/delivery.test.mjs tests/automatic-recovery.test.mjs tests/everyday.test.mjs tests/calendar-tasks.test.mjs",
     "test:browser": "npm run build && node tests/cloudflare_browser.mjs",
     "test:recovery": "npm run build && node tests/cloudflare_browser.mjs tests/cloudflare_recovery_browser.py",
     "test:refresh": "npm run build && node tests/refresh-gmail-browser.mjs",
-    "test:everyday": "npm run build && node tests/cloudflare_browser.mjs tests/everyday_browser.py"
+    "test:everyday": "npm run build && node tests/cloudflare_browser.mjs tests/everyday_browser.py",
+    "test:calendar": "npm run build && node tests/cloudflare_browser.mjs tests/calendar_tasks_browser.py"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "1.1.1",
