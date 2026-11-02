@@ -164,7 +164,9 @@ function copySources(){
   if(value===destination)return;
   sources.push({value,date,day});
  });
- sources.sort((a,b)=>b.value.localeCompare(a.value));
+ const targetTime=Date.parse(destination+'T00:00:00Z');
+ const distance=value=>Math.abs(Date.parse(value+'T00:00:00Z')-targetTime);
+ sources.sort((a,b)=>distance(a.value)-distance(b.value)||a.value.localeCompare(b.value));
  const placeholder=node('option',sources.length?'Choisir une journée…':'Aucune autre journée remplie');placeholder.value='';placeholder.disabled=true;placeholder.selected=true;
  $('copy-source').replaceChildren(placeholder,...sources.map(({value,date,day})=>{
   const clients=[...new Set(day.map(item=>item.client||'Sans client'))].join(', ');
