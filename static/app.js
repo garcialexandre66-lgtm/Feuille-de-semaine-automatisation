@@ -157,20 +157,45 @@ $('workshop-day').onclick=()=>{
  store.weeks[week][selected]=[{client:'Atelier ASC',city:'',workplace:'atelier',travel:0,tpe:480,regie:0,chantier:0,sav:0}];save();render();
 };
 function copySources(){
- const key=$('copy-week').value;
- $('copy-source').replaceChildren(...names.slice(0,5).map((name,i)=>{const option=node('option',`${name} · ${fmt(daySum(store.weeks[key][i]))}`);option.value=i;option.disabled=!store.weeks[key][i].length;return option;}));
- const first=store.weeks[key].slice(0,5).findIndex(day=>day.length);$('copy-source').value=first>=0?String(first):'';
+ const destination=selectedDate(),sources=[];
+ for(const [key,weekDays] of Object.entries(store.weeks))weekDays.forEach((day,index)=>{
+  if(!day.length)return;
+  const date=new Date(key+'T12:00:00');date.setDate(date.getDate()+index);const value=iso(date);
+  if(value===destination)return;
+  sources.push({value,date,day});
+ });
+ sources.sort((a,b)=>b.value.localeCompare(a.value));
+ const placeholder=node('option',sources.length?'Choisir une journée…':'Aucune autre journée remplie');placeholder.value='';placeholder.disabled=true;placeholder.selected=true;
+ $('copy-source').replaceChildren(placeholder,...sources.map(({value,date,day})=>{
+  const clients=[...new Set(day.map(item=>item.client||'Sans client'))].join(', ');
+  const option=node('option',date.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+' · '+clients+' · '+fmt(daySum(day)));
+  option.value=value;return option;
+ }));
+ $('copy-source').value='';$('copy-preview').textContent='';
 }
 $('copy-day').onclick=()=>{
- const keys=Object.keys(store.weeks).filter(k=>store.weeks[k].slice(0,5).some(d=>d.length)).sort().reverse();
- if(!keys.length){$('status').textContent='Enregistrez une première journée avant de la copier.';return;}
- $('copy-week').replaceChildren(...keys.map(k=>{const o=node('option',`Semaine du ${new Date(k+'T12:00:00').toLocaleDateString('fr-FR')}`);o.value=k;return o;}));
- if(keys.includes(week))$('copy-week').value=week;copySources();$('copy-error').textContent='';
- $('copy-target').textContent=`Destination : ${names[selected].toLowerCase()}, semaine du ${new Date(week+'T12:00:00').toLocaleDateString('fr-FR')}`;
+ copySources();$('copy-error').textContent='';
+ $('copy-target').textContent='Copier vers : '+new Date(selectedDate()+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
  $('copy-dialog').showModal();
 };
-$('copy-week').onchange=copySources;$('copy-cancel').onclick=()=>$('copy-dialog').close();
-$('copy-form').onsubmit=e=>{e.preventDefault();const source=store.weeks[$('copy-week').value]?.[Number($('copy-source').value)];if(!source?.length){$('copy-error').textContent='Choisissez une journée remplie.';return;}if(days()[selected].length&&!confirm('Remplacer les interventions de cette journée par la copie ?'))return;store.weeks[week][selected]=JSON.parse(JSON.stringify(source));save();render();$('copy-dialog').close();};
+function copySourceDay(){
+ const value=$('copy-source').value;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value)||value===selectedDate())return null;
+ const date=new Date(value+'T12:00:00');
+ return store.weeks[monday(value)]?.[(date.getDay()+6)%7];
+}
+$('copy-source').onchange=()=>{
+ $('copy-error').textContent='';
+ const source=copySourceDay();
+ $('copy-preview').textContent=source?.length?source.map(item=>(item.client||'Sans client')+(item.city?' · '+item.city:'')+' · '+fmt(sum(item))).join(' ; '):'';
+};
+$('copy-cancel').onclick=()=>$('copy-dialog').close();
+$('copy-form').onsubmit=e=>{
+ e.preventDefault();const source=copySourceDay();
+ if(!source?.length){$('copy-error').textContent='Choisissez une journée remplie à copier.';return;}
+ if(days()[selected].length&&!confirm('Remplacer les interventions de cette journée par la copie ?'))return;
+ store.weeks[week][selected]=JSON.parse(JSON.stringify(source));save();render();$('copy-dialog').close();
+};
 
 function selectedDate(){const d=new Date(week+'T12:00:00');d.setDate(d.getDate()+selected);return iso(d);}
 function leaveDates(){
