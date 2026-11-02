@@ -12,3 +12,31 @@ header .brand b{color:#536075}header .header-actions #settings-open{color:#202a3
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 header .header-actions #refresh-app{color:#202a3a;background:#fff;border:1px solid #dce2eb}.gmail-button{width:100%;min-height:54px;margin-top:10px;color:#2457c5;background:#fff;font-size:17px}.gmail-compose{display:flex;align-items:center;justify-content:center;min-height:52px;padding:12px;text-align:center;border:1px solid #dce2eb;border-radius:10px;color:#2457c5;font-weight:600;text-decoration:none}.gmail-compose:focus-visible{outline:3px solid #2457c5;outline-offset:3px}#gmail-dialog p{overflow-wrap:anywhere}
 .gmail-compose.primary{background:#2457c5;color:white;border-color:#2457c5;white-space:normal}#gmail-dialog details{margin-top:18px}#gmail-dialog summary{min-height:44px;padding:10px 0;cursor:pointer}.gmail-body-preview{white-space:pre-line;background:#f6f8fb;border:1px solid #dce2eb;border-radius:10px;padding:14px;font-size:16px;line-height:1.5}
+
+/* Day recap: small entrance motion, with a static version for reduced motion. */
+.day-confirmation{width:min(440px,calc(100vw - 28px));max-height:calc(100dvh - 40px);padding:0;border:1px solid var(--border);border-radius:24px;color:var(--ink);background:white;overflow-y:auto;box-shadow:0 24px 90px #17243f33}
+.day-confirmation::backdrop{background:#15203988}
+.day-confirmation[open]{animation:day-recap-enter .32s ease-out both}
+.day-confirmation-content{padding:28px 24px 24px;text-align:center}
+.day-confirmation-check{width:76px;height:76px;display:grid;place-items:center;margin:0 auto 16px;border-radius:50%;background:var(--paper);color:var(--accent);animation:day-recap-pop .45s ease-out both}
+.day-confirmation-check svg{width:54px;height:54px}
+.day-confirmation-check path{stroke-dasharray:50;stroke-dashoffset:0;animation:day-recap-tick .45s ease-out .1s both}
+.day-confirmation-eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;font-size:14px}
+.day-confirmation h2{margin:0;font-size:25px;line-height:1.2}
+.day-confirmation-date{margin:10px 0 20px;color:#667286;font-size:14px}
+.day-confirmation-total{padding:18px;border-radius:16px;background:var(--paper);display:flex;flex-direction:column;gap:5px}
+.day-confirmation-total span{font-size:14px}
+.day-confirmation-total strong{font-size:36px;line-height:1.2;color:var(--accent);font-variant-numeric:tabular-nums}
+.day-confirmation-list{list-style:none;padding:0;margin:12px 0;text-align:left}
+.day-confirmation-list li{padding:14px 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
+.day-confirmation-line{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.day-confirmation-line>div{min-width:0}
+.day-confirmation-line>div span{display:block;margin-top:4px;color:#667286;font-size:14px}
+.day-confirmation-line>strong{white-space:nowrap;font-size:16px;font-variant-numeric:tabular-nums}
+.day-confirmation-list li p{margin:7px 0 0;color:#667286;font-size:13px;line-height:1.5}
+.day-confirmation-hint{margin:16px 0;font-size:13px;color:#667286;line-height:1.5}
+.day-confirmation button{width:100%}
+@keyframes day-recap-enter{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes day-recap-pop{0%{transform:scale(.6)}65%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes day-recap-tick{from{stroke-dashoffset:50}to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.day-confirmation[open],.day-confirmation-check,.day-confirmation-check path{animation:none!important}}

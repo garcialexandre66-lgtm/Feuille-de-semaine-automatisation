@@ -21,9 +21,46 @@ $('form').onsubmit=event=>{
  event.preventDefault();try{
   for(const input of $('form').querySelectorAll('input:not(:disabled)'))if(!input.checkValidity()){input.reportValidity();return;}
   const {item,day}=readItem();if($('remember-favorite').checked&&!isWorkshop())rememberFavoriteItem(item);
-  store.weeks[week][selected]=day;if(selected>=5)expandedDay=selected;save();render();$('editor').close();
+  store.weeks[week][selected]=day;if(selected>=5)expandedDay=selected;save();render();$('editor').close();showDayConfirmation(day);
  }catch(error){$('error').textContent=error.message;}
 };
+// A short celebration and a readable snapshot of the day just entered.
+const dayConfirmation=node('dialog',null,'day-confirmation');
+dayConfirmation.id='day-confirmation';dayConfirmation.setAttribute('aria-labelledby','day-confirmation-title');
+dayConfirmation.setAttribute('aria-describedby','day-confirmation-date');
+document.body.append(dayConfirmation);
+function showDayConfirmation(day){
+ const snapshot=JSON.parse(JSON.stringify(day));
+ const date=new Date(week+'T12:00:00');date.setDate(date.getDate()+selected);
+ const content=node('div',null,'day-confirmation-content'),badge=node('div',null,'day-confirmation-check');
+ badge.setAttribute('aria-hidden','true');
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ svg.setAttribute('viewBox','0 0 52 52');svg.setAttribute('fill','none');
+ const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+ path.setAttribute('d','M14 27l8 8 17-18');path.setAttribute('stroke','currentColor');
+ path.setAttribute('stroke-width','4');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');
+ svg.append(path);badge.append(svg);
+ const eyebrow=node('p','Bien joué !','day-confirmation-eyebrow'),title=node('h2','Votre journée en résumé'),dateLabel=node('p',date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'day-confirmation-date');
+ title.id='day-confirmation-title';dateLabel.id='day-confirmation-date';
+ const total=node('div',null,'day-confirmation-total');
+ total.append(node('span','Total de la journée'),node('strong',fmt(daySum(snapshot))));
+ const list=node('ul',null,'day-confirmation-list');
+ for(const item of snapshot){
+  const line=node('li'),heading=node('div',null,'day-confirmation-line'),place=node('div');
+  place.append(node('strong',item.client||'Temps pour l’entreprise'));
+  if(item.city)place.append(node('span',item.city));
+  heading.append(place,node('strong',fmt(sum(item))));line.append(heading);
+  const details=fields.flatMap((key,index)=>item[key]?[labels[index]+' : '+fmt(item[key])]:[]);
+  if(details.length)line.append(node('p',details.join(' · ')));
+  list.append(line);
+ }
+ const hint=node('p','Vous pouvez encore modifier les heures ou ajouter une intervention.','day-confirmation-hint');
+ const close=node('button','Continuer','primary');close.type='button';close.autofocus=true;close.id='day-confirmation-close';
+ close.onclick=()=>dayConfirmation.close();
+ content.append(badge,eyebrow,title,dateLabel,total,list,hint,close);
+ dayConfirmation.replaceChildren(content);dayConfirmation.showModal();
+}
+
 // Keep the existing, tested calculations and entry editing in the expanded card.
 const dayPanel=$('view-day');
 // Reuse yesterday without sharing entry objects with the original day.
