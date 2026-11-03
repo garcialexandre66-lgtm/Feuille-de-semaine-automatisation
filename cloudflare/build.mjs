@@ -10,8 +10,9 @@ await build({ entryPoints:['cloudflare/export.mjs'], bundle:true, format:'esm', 
 const assets=[];
 async function walk(path='dist') { for(const entry of await readdir(path,{withFileTypes:true})){const file=path+'/'+entry.name;if(entry.isDirectory())await walk(file);else if(!entry.name.startsWith('_')&&!entry.name.endsWith('.txt'))assets.push('/'+file.slice(5));} }
 await walk();assets.sort();
-const digest=createHash('sha256');for(const asset of assets){digest.update(asset);digest.update(await readFile('dist'+asset));}
+const template=await readFile('cloudflare/sw-template.js','utf8');
+const digest=createHash('sha256');digest.update(template);for(const asset of assets){digest.update(asset);digest.update(await readFile('dist'+asset));}
 const cache='asc-shell-'+digest.digest('hex').slice(0,16);
-const sw=(await readFile('cloudflare/sw-template.js','utf8')).replace('__CACHE_NAME__',JSON.stringify(cache)).replace('__ASSET_LIST__',JSON.stringify(assets));
+const sw=template.replace('__CACHE_NAME__',JSON.stringify(cache)).replace('__ASSET_LIST__',JSON.stringify(assets));
 await writeFile('dist/sw.js',sw);
 console.log('Application Cloudflare préparée dans dist/.');

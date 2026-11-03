@@ -1,5 +1,6 @@
 import '../static/domain.js';
 import { deliveryInfo,saveDelivery,startGoogle,finishGoogle,scheduledDelivery } from './delivery.mjs';
+import { recoveryHtml } from './recovery-page.mjs';
 const encoder=new TextEncoder();
 const hex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 const unhex=s=>Uint8Array.from(s.match(/../g),v=>parseInt(v,16));
@@ -50,6 +51,12 @@ async function body(request){
 }
 async function api(request,env,url){
  const path=url.pathname;
+ // These paths bypass older offline workers. Recovery changes only the shell registration.
+ if(request.method==='GET'&&path==='/api/recover')return new Response(recoveryHtml,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});
+ if(request.method==='GET'&&['/api/recover-script','/api/recover-style'].includes(path)){
+  const script=path==='/api/recover-script',asset=await env.ASSETS.fetch(new Request(new URL(script?'/shell-repair.js':'/shell-repair.css',url)));
+  return new Response(asset.body,{status:asset.status,headers:{...headers,'Content-Type':script?'text/javascript; charset=utf-8':'text/css; charset=utf-8'}});
+ }
  if(!env.DB)return json(503,{error:'La base D1 doit être reliée à l’application.'});
  if(request.method==='GET'&&path==='/api/google/callback'){
   try{return await finishGoogle(request,env);}catch(error){return json(400,{error:error.message});}
