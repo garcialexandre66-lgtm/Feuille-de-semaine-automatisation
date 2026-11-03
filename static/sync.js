@@ -19,7 +19,7 @@ function showLogin(message=''){
 }
 function showApp(){
  $('application').hidden=false;$('login-panel').hidden=true;$('access-code').value='';
- $('migrate-local').hidden=!Object.keys(legacy.weeks).some(k=>legacy.weeks[k].some(day=>day.length));render();
+ $('migrate-local').hidden=!Object.keys(legacy.weeks).some(k=>legacy.weeks[k].some(day=>day.length));render();if(typeof importSchoolLink==='function')void importSchoolLink();
 }
 async function syncSave(){
  dirty=true;generation++;cacheSaved=false;$('status').textContent='Enregistrement…';clearTimeout(pending);
