@@ -31,7 +31,7 @@ function renderMonthCalendar(){
 }
 calendarButton.onclick=()=>{calendarMonth.value=selectedDate().slice(0,7);renderMonthCalendar();calendarDialog.showModal();};
 function moveCalendarMonth(offset){const date=new Date(calendarMonth.value+'-01T12:00:00');if(!Number.isFinite(date.getTime()))return;date.setMonth(date.getMonth()+offset);calendarMonth.value=iso(date).slice(0,7);renderMonthCalendar();}
-calendarPrevious.onclick=()=>moveCalendarMonth(-1);calendarNext.onclick=()=>moveCalendarMonth(1);calendarMonth.onchange=renderMonthCalendar;
+calendarPrevious.onclick=()=>moveCalendarMonth(-1);calendarNext.onclick=()=>moveCalendarMonth(1);calendarMonth.onchange=()=>{if(!calendarMonth.value)calendarMonth.value=selectedDate().slice(0,7);renderMonthCalendar();};
 
 const defaultTasks=()=>({'default-tools':{text:'Outils récupérés',done:false},'default-clean':{text:'Chantier rangé',done:false},'default-checks':{text:'Vérifications faites',done:false}});
 const todo=node('details',null,'daily-disclosure day-todo'),todoSummary=node('summary'),todoCount=node('span',null,'todo-count'),todoList=node('div',null,'todo-list'),todoForm=node('form',null,'todo-add'),todoInput=node('input'),todoAdd=node('button','Ajouter'),todoError=node('p');
@@ -46,7 +46,7 @@ function renderDayTodo(){
  todoList.replaceChildren(...entries.map(([id,task])=>{
   const row=node('div',null,'todo-row'),label=node('label'),input=node('input'),text=node('span',task.text),remove=node('button','✕');input.type='checkbox';input.checked=task.done;input.dataset.task=id;label.append(input,text);remove.type='button';remove.setAttribute('aria-label','Retirer la tâche : '+task.text);row.dataset.done=String(task.done);
   input.onchange=()=>{editTasks(date)[id]={...task,done:input.checked};save();renderDayTodo();[...todoList.querySelectorAll('input')].find(item=>item.dataset.task===id)?.focus();};
-  remove.onclick=()=>{delete editTasks(date)[id];save();renderDayTodo();todoInput.focus();};row.append(label,remove);return row;
+  remove.onclick=()=>{delete editTasks(date)[id];offerTaskUndo(date,id,task);save();renderDayTodo();todoInput.focus();};row.append(label,remove);return row;
  }));
  if(!entries.length)todoList.append(node('p','Ajoute une tâche pour préparer ton départ du chantier.','hint'));
 }

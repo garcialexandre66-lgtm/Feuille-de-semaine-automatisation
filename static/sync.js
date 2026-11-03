@@ -3,7 +3,7 @@ let connected=false,revision=0,dirty=false,generation=0,pending=null,busy=false,
 let baseStore=Timesheet.extras({name:'',weeks:{}});
 const legacy=JSON.parse(JSON.stringify(store));store=Timesheet.extras({name:'',weeks:{}});
 const copy=value=>JSON.parse(JSON.stringify(value));
-function syncMessage(text,error=false){$('sync-status').textContent=text;$('sync-status').toggleAttribute('data-error',error);}
+function syncMessage(text,error=false){$('sync-status').textContent=text;$('sync-status').toggleAttribute('data-error',error);if(typeof updateConnectionStatus==='function')updateConnectionStatus(text,error);}
 async function api(path,body){
  const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});
  const data=await response.json();if(!response.ok){const error=Error(data.error||'Connexion impossible.');error.status=response.status;throw error;}return data;
@@ -15,7 +15,7 @@ function adoptCached(saved){
  store=checkStore(saved.store);baseStore=checkStore(saved.base||copy(saved.store));revision=saved.revision;dirty=!!saved.dirty;window.ASC_CLOUDFLARE=saved.deployment==='cloudflare';cacheSaved=true;
 }
 function showLogin(message=''){
- connected=false;$('application').hidden=true;$('login-panel').hidden=false;$('login-error').textContent=message;for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();$('access-code').value='';$('access-code').focus();
+ connected=false;$('application').hidden=true;$('login-panel').hidden=false;$('login-error').textContent=message;$('login-error').dataset.kind=/^(Code créé|Espace verrouillé|Entrez votre code|Reconnectez|Ouvrez)/.test(message)?'info':'error';for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();$('access-code').value='';$('access-code').type='password';if($('toggle-code')){$('toggle-code').setAttribute('aria-pressed','false');$('toggle-code').textContent='Afficher';}$('access-code').focus();
 }
 function showApp(){
  $('application').hidden=false;$('login-panel').hidden=true;$('access-code').value='';
@@ -32,7 +32,7 @@ async function reconcile(){
  const remote=await api('/api/state');
  const merged=Timesheet.merge(baseStore,store,checkStore(remote.store));
  if(!merged){showConflict();return false;}
- store=checkStore(merged);baseStore=checkStore(remote.store);revision=remote.revision;generation++;await persist();render();return true;
+ store=checkStore(merged);baseStore=checkStore(remote.store);revision=remote.revision;generation++;await persist();if(typeof hasPendingEdits!=='function'||!hasPendingEdits())render();return true;
 }
 async function push(){
  if(!connected||busy||conflicting)return false;if(!dirty){syncMessage('✓ Semaines synchronisées');return true;}
@@ -40,13 +40,14 @@ async function push(){
  try{const result=await api('/api/state',{revision,store:submitted});revision=result.revision;baseStore=submitted;if(generation===sent)dirty=false;await persist();syncMessage(dirty?'Synchronisation en cours…':'✓ Semaines synchronisées');return !dirty;}
  catch(error){
   if(error.status===409){try{await reconcile();}catch{syncMessage('Synchronisation interrompue. Vos données locales sont conservées.',true);}}
-  else if(error.status===401){await persist();showLogin('Reconnectez-vous pour synchroniser vos modifications. Elles sont conservées sur cet appareil.');}
+  else if(error.status===401){await persist();if(typeof hasPendingEdits==='function'&&hasPendingEdits()){connected=false;syncMessage('Session expirée. Enregistrez votre saisie puis reconnectez-vous.',true);}else showLogin('Reconnectez-vous pour synchroniser vos modifications. Elles sont conservées sur cet appareil.');}
+  else if(error.status&&error.status<500)syncMessage('Synchronisation refusée : '+error.message,true);
   else syncMessage(cacheSaved?'Hors connexion · enregistré sur cet appareil':'Non synchronisé : téléchargez une sauvegarde.',!cacheSaved);
   return false;
  }finally{busy=false;if(dirty&&generation!==sent&&!conflicting&&connected)pending=setTimeout(push,300);}
 }
 async function pull(){
- if(!connected||busy||document.querySelector('dialog[open]')||document.activeElement?.matches('input,textarea,select'))return;
+ if(!connected||busy||document.querySelector('dialog[open]')||document.activeElement?.matches('input,textarea,select')||(typeof hasPendingEdits==='function'&&hasPendingEdits()))return;
  if(dirty){await push();return;}busy=true;const before=generation;
  try{const result=await api('/api/state');if(generation!==before||dirty)return;if(result.revision!==revision){store=checkStore(result.store);baseStore=copy(store);revision=result.revision;await persist();render();}syncMessage('✓ Semaines synchronisées');}
  catch(error){if(error.status===401)showLogin('Reconnectez-vous pour synchroniser. Vos données locales restent disponibles.');else syncMessage('Hors connexion · données conservées sur cet appareil');}finally{busy=false;}
@@ -60,10 +61,10 @@ async function openAccount(){
  const result=await api('/api/state');
  if(!dirty){store=checkStore(result.store);baseStore=copy(store);revision=result.revision;}
  else if(result.revision!==revision){const merged=Timesheet.merge(baseStore,store,checkStore(result.store));if(merged){store=checkStore(merged);baseStore=checkStore(result.store);revision=result.revision;generation++;}else showConflict();}
- connected=true;await persist();showApp();syncMessage(dirty?'Modifications à synchroniser.':'✓ Semaines synchronisées');prepareShell();if(dirty&&!conflicting)await push();
+ connected=true;await persist();if($('application').hidden||typeof hasPendingEdits!=='function'||!hasPendingEdits())showApp();syncMessage(dirty?'Modifications à synchroniser.':'✓ Semaines synchronisées');prepareShell();if(dirty&&!conflicting)await push();
 }
 $('login-form').onsubmit=async event=>{
- event.preventDefault();const button=$('login-form').querySelector('button'),code=$('access-code').value;button.disabled=true;
+ event.preventDefault();const button=$('login-form').querySelector('button[type="submit"]'),code=$('access-code').value;button.disabled=true;
  try{
   let credentials={code};if(window.ASC_CLOUDFLARE){const info=await api('/api/session');if(!info.salt)throw Error('Créez d’abord votre code personnel.');credentials={key:await cloudKey(code,info.salt)};}
   await api('/api/login',credentials);
@@ -79,7 +80,7 @@ $('login-form').onsubmit=async event=>{
 $('sync-now').onclick=async()=>{if(!connected){await reconnect();return;}if(dirty)await push();else await pull();};
 async function reconnect(){
  if(!OfflineStore.ready())return;
- try{const info=await api('/api/session');if(!info.authenticated){await persist();showLogin('Entrez votre code pour synchroniser vos saisies hors connexion.');return;}await openAccount();}catch{syncMessage('Hors connexion · données conservées sur cet appareil');}
+ try{const info=await api('/api/session');if(!info.authenticated){await persist();if(typeof hasPendingEdits==='function'&&hasPendingEdits()){syncMessage('Session expirée. Enregistrez votre saisie puis reconnectez-vous.',true);return;}showLogin('Entrez votre code pour synchroniser vos saisies hors connexion.');return;}await openAccount();}catch{syncMessage('Hors connexion · données conservées sur cet appareil');}
 }
 $('logout').onclick=async()=>{
  if(!await persist()&&dirty){alert('Téléchargez une sauvegarde avant de verrouiller : la sauvegarde locale a échoué.');return;}

@@ -8,8 +8,9 @@ self.addEventListener('fetch',event=>{
  // Personal API responses and generated exports are never cached.
  if(request.method!=='GET'||url.origin!==self.location.origin||url.pathname.startsWith('/api/')||url.pathname.startsWith('/export'))return;
  if(request.mode==='navigate'){
-  event.respondWith(fetch(request,{cache:'no-store'}).then(response=>response.ok?response:caches.match('/index.html',{cacheName:CACHE})).catch(()=>caches.match('/index.html',{cacheName:CACHE})));return;
+  // Keep HTML and scripts in one installed version, even during a deployment.
+  event.respondWith(caches.match('/index.html',{cacheName:CACHE}).then(cached=>cached||fetch(request,{cache:'no-store'})));return;
  }
  if(!ASSETS.includes(url.pathname))return;
- event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(url.pathname,copy)));}return response;}).catch(()=>caches.match(url.pathname,{cacheName:CACHE})));
+ event.respondWith(caches.match(url.pathname,{cacheName:CACHE}).then(cached=>cached||fetch(request,{cache:'no-store'}).then(response=>{if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(url.pathname,copy)));}return response;})));
 });

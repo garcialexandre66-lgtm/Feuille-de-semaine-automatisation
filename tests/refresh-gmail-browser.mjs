@@ -25,7 +25,7 @@ try{
  page.on('pageerror',error=>errors.push(error.message));
  await page.goto(origin);await page.locator('#cloud-setup').waitFor({state:'visible'});
  await page.locator('#setup-token').fill(setupToken);await page.locator('#new-code').fill('test-only-refresh-code');await page.locator('#confirm-code').fill('test-only-refresh-code');await page.locator('#cloud-setup-form button').click();
- await page.locator('#access-code').fill('test-only-refresh-code');await page.locator('#login-form button').click();await page.locator('#application').waitFor({state:'visible'});
+ await page.locator('#access-code').fill('test-only-refresh-code');await page.locator('#login-form button[type=submit]').click();await page.locator('#application').waitFor({state:'visible'});
  await page.locator('#settings-open').click();await page.locator('#name').fill('Test actualisation');await page.locator('#settings-close').click();
  await page.waitForFunction(()=>cacheSaved&&!dirty);
  await page.evaluate(()=>{week='2026-10-26';store.weeks[week]=Array.from({length:7},(_,i)=>i<5?[{client:'Atelier ASC',workplace:'atelier',city:'',travel:0,tpe:420,regie:0,chantier:0,sav:0}]:[]);save();render();});
@@ -44,7 +44,7 @@ try{
  // An unrecorded line is protected when refresh is cancelled.
  await page.locator('#week-cards > .week-card > summary').first().click();await page.locator('#add').click();await page.locator('#form [name=client]').fill('Brouillon à conserver');
  page.once('dialog',dialog=>dialog.dismiss());const draftOrigin=await page.evaluate(()=>performance.timeOrigin);await page.evaluate(()=>$('refresh-app').click());
- assert.equal(await page.evaluate(()=>performance.timeOrigin),draftOrigin);assert.equal(await page.locator('#form [name=client]').inputValue(),'Brouillon à conserver');await page.locator('#cancel').click();await page.locator('#week-cards > .week-card > summary').first().click();
+ assert.equal(await page.evaluate(()=>performance.timeOrigin),draftOrigin);assert.equal(await page.locator('#form [name=client]').inputValue(),'Brouillon à conserver');page.once('dialog',dialog=>dialog.accept());await page.locator('#cancel').click();await page.locator('#week-cards > .week-card > summary').first().click();
  // Real encrypted pending edits survive an offline refresh in the same tab.
  await context.setOffline(true);await page.locator('#settings-open').click();await page.locator('#name').fill('Modification hors ligne');await page.locator('#settings-close').click();await page.waitForFunction(()=>cacheSaved&&dirty);
  const offlineOrigin=await page.evaluate(()=>performance.timeOrigin);await page.locator('#refresh-app').click();await page.waitForFunction(t=>performance.timeOrigin!==t,offlineOrigin);await page.locator('#application').waitFor({state:'visible'});

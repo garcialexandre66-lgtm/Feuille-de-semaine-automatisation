@@ -77,10 +77,9 @@ $('add').after(repeatYesterday,repeatYesterdayHelp);
 function renderRepeatYesterday(){
  const source=previousDaySource();
  repeatYesterday.disabled=!source.entries.length;
+ repeatYesterday.hidden=repeatYesterdayHelp.hidden=!source.entries.length;
  const date=new Date(source.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'});
- repeatYesterdayHelp.textContent=source.entries.length
-  ?'Reprendre '+date+' : client, chantier, trajet et heures. Vous pourrez ensuite les modifier.'
-  :'Aucune intervention à reprendre le '+date+'. Choisissez « Copier une journée » dans le menu ci-dessous pour une autre date.';
+ repeatYesterdayHelp.textContent=source.entries.length?'Client, trajet et heures de '+date+'.':'';
 }
 repeatYesterday.onclick=()=>{
  const source=previousDaySource();if(!source.entries.length)return;
@@ -121,6 +120,7 @@ function renderSimple(){
  overtimeExtra.hidden=extra===0;overtimeExtra.textContent=extra?'+'+fmt(extra)+' d’heures sup':'';
  overtimeNote.textContent=weekMinutes<2100?fmt(2100-weekMinutes)+' restantes pour atteindre 35 h':'Objectif de 35 h atteint';
  renderDailyTools();
+ if(typeof renderPolishedHome==='function')renderPolishedHome();
 }
 function dayCard(day,index){
  const card=node('details',null,'week-card'),summary=node('summary'),heading=node('div',null,'card-heading');

@@ -32,7 +32,8 @@ async function checkForAppUpdates(){
 }
 async function refreshApplication(){
  if(refreshInProgress)return;
- if(document.querySelector('#editor[open]')&&!confirm('Actualiser et fermer la ligne non enregistrée ?'))return;
+ if(typeof confirmDiscardEdits==='function'){if(!confirmDiscardEdits())return;}
+ else if(document.querySelector('#editor[open]')&&!confirm('Actualiser et fermer la ligne non enregistrée ?'))return;
  refreshInProgress=true;for(const id of ['refresh-app','reload-app'])if($(id))$(id).disabled=true;
  try{
   $('status').textContent='Enregistrement et actualisation…';

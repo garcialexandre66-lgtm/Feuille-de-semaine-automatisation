@@ -20,11 +20,17 @@ function deleteEntry(index){
 }
 undoButton.onclick=()=>{
  if(!lastDeletion)return;
+ if(lastDeletion.kind==='task'){
+  const item=lastDeletion,tasks=store.dayTasks[item.date];
+  if(!tasks||tasks[item.id]){undoMessage.textContent='Cette tâche a changé. Son état actuel est conservé.';return;}
+  tasks[item.id]={...item.task};clearUndo();save();render();$('status').textContent='Tâche restaurée.';return;
+ }
  const item=lastDeletion,current=store.weeks[item.week]?.[item.index];
  if(!current||dayFingerprint(current)!==item.after){undoMessage.textContent='Cette journée a changé. Annulation impossible sans écraser les nouvelles saisies.';return;}
  store.weeks[item.week][item.index]=cloneDay(item.before);clearUndo();save();render();$('status').textContent='Intervention restaurée.';
 };
 
+function offerTaskUndo(date,id,task){lastDeletion={kind:'task',date,id,task:{...task}};undoMessage.textContent='Tâche retirée.';undoBar.hidden=false;}
 function openQuickHours(index,article){
  document.querySelectorAll('.quick-hours').forEach(form=>form.remove());
  const key=week,dayIndex=selected,original=cloneDay(days()[selected]),item=original[index];
@@ -33,7 +39,7 @@ function openQuickHours(index,article){
  const workshop=['atelier','school'].includes(item.workplace)||['Atelier ASC','École'].includes(item.client);
  const visible=workshop?['tpe']:fields;
  for(const field of visible){const label=node('label',field==='travel'?'Trajet':field==='tpe'?(item.workplace==='school'?'École':'Entreprise / atelier'):labels[fields.indexOf(field)]);const input=node('input');input.name=field;input.type='text';input.value=fmt(item[field]);input.required=true;input.maxLength=20;input.setAttribute('aria-label',label.textContent);label.append(input);grid.append(label);}
- const cancel=node('button','Annuler'),submit=node('button','Enregistrer les heures','primary');cancel.type='button';submit.type='submit';cancel.onclick=()=>form.remove();actions.append(cancel,submit);form.append(grid,error,actions);article.append(form);form.querySelector('input').focus();
+ const cancel=node('button','Annuler'),submit=node('button','Enregistrer les heures','primary');cancel.type='button';submit.type='submit';cancel.onclick=()=>{if(typeof confirmDiscardEdits!=='function'||confirmDiscardEdits()){form.remove();render();}};actions.append(cancel,submit);form.append(grid,error,actions);article.append(form);form.dataset.initial=JSON.stringify([...new FormData(form)]);form.querySelector('input').focus();
  form.onsubmit=event=>{
   event.preventDefault();try{
    if(dayFingerprint(store.weeks[key]?.[dayIndex]||[])!==dayFingerprint(original))throw Error('Cette journée a changé. Fermez et rouvrez les heures.');

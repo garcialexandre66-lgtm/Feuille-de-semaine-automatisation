@@ -41,6 +41,7 @@ with sync_playwright() as p:
     assert page.locator('#form [name=city]').input_value()=='Canet'
     assert page.locator('#form [name=travel]').input_value()=='30'
     assert page.evaluate("parseDuration($('form').elements.chantier.value)")==0
+    page.once('dialog',lambda dialog:dialog.accept())
     page.locator('#cancel').click()
     # Direct editing keeps identity; bad durations do not alter the day.
     page.locator('#entries .edit-hours').click()
@@ -100,7 +101,7 @@ with sync_playwright() as p:
     assert len(remote['completedDays'])==1
     assert 'Lire un schéma' in next(iter(remote['learningNotes'].values()))
     page.reload();page.locator('#application').wait_for(state='visible')
-    page.locator('.week-card[data-day="1"]>summary').click()
+    if not page.locator('.week-card[data-day="1"]').evaluate('(card)=>card.open'):page.locator('.week-card[data-day="1"]>summary').click()
     assert page.locator('#day-completed').is_checked()
     page.locator('#day-learning>summary').click()
     assert 'Lire un schéma' in page.locator('#learning-note').input_value()
@@ -108,7 +109,7 @@ with sync_playwright() as p:
     page.locator('#learning-note').fill('Lire un schéma électrique, puis tester le raccordement hors connexion.')
     page.wait_for_function('() => cacheSaved')
     page.reload();page.locator('#application').wait_for(state='visible')
-    page.locator('.week-card[data-day="1"]>summary').click()
+    if not page.locator('.week-card[data-day="1"]').evaluate('(card)=>card.open'):page.locator('.week-card[data-day="1"]>summary').click()
     page.locator('#day-learning>summary').click()
     assert 'hors connexion' in page.locator('#learning-note').input_value()
     context.set_offline(False)
