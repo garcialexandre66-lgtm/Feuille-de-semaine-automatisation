@@ -51,6 +51,18 @@ with sync_playwright() as p:
     page.evaluate('()=>{OfflineStore.persist=window.originalTestPersist;}')
     page.get_by_role('button',name='Réessayer',exact=True).click();page.wait_for_function('() => pendingSchoolDates===null')
     assert 'ecole=' not in page.url
+    # Exact replacement drops old automatic school rows, but keeps jobs.
+    page.evaluate("""()=>{store.schoolDates['2030-01-08']=true;store.weeks['2030-01-07']=[[],[{client:'École',city:'',workplace:'school',travel:0,tpe:420,regie:0,chantier:0,sav:0,prep:'',intervention:''}],[],[],[],[],[]];save();}""")
+    page.wait_for_function('() => !dirty&&!busy')
+    page.goto(os.environ['ASC_TEST_URL']+'#ecole=20300109&remplacer=1&du=20300101&au=20301231')
+    page.wait_for_function('() => pendingSchoolDates===null')
+    assert page.evaluate("store.weeks['2030-01-07'][1].length")==0
+    assert page.evaluate("store.weeks['2030-01-07'][2][0].tpe")==420
+    assert not page.evaluate("!!store.schoolDates['2030-01-08']")
+    assert page.evaluate("store.weeks['2026-11-02'][0][0].tpe")==480
+    page.wait_for_function('() => !dirty&&!busy')
+    remote=page.evaluate("async()=> (await api('/api/state')).store")
+    assert remote['weeks']['2030-01-07'][1]==[]
     # Invalid input does not partially change the account.
     before=page.evaluate('Object.keys(store.schoolDates).length')
     page.goto(os.environ['ASC_TEST_URL']+'#ecole=20260231')
