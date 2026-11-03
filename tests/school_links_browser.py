@@ -34,7 +34,12 @@ with sync_playwright() as p:
     page.locator('#school-link-result button').filter(has_text='Voir le calendrier').click()
     page.locator('#calendar-month').fill(dates[0][:7])
     assert page.locator('[data-date="'+dates[0]+'"]').get_attribute('data-kind')=='school'
-    page.keyboard.press('Escape')
+    page.locator('[data-date="'+dates[0]+'"]').click()
+    assert 'Cours au CFA' in page.locator('.week-card[open]>summary').inner_text()
+    assert 'École prévue' in page.locator('.week-card[open]>summary').inner_text()
+    page.locator('#add').click();assert page.locator('#workplace').input_value()=='school'
+    assert not page.locator('#form [name=chantier]').is_visible()
+    page.locator('#cancel').click()
     # Reopening the same link is idempotent.
     page.goto(os.environ['ASC_TEST_URL']+fragment);page.wait_for_function('() => pendingSchoolDates===null')
     assert page.evaluate('Object.keys(store.schoolDates).length')==len(dates)+1

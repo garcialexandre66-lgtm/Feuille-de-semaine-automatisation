@@ -18,7 +18,7 @@ function renderMonthCalendar(){
  calendarMonthName.textContent=first.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
  const cells=[];for(let i=0;i<(first.getDay()+6)%7;i++){const blank=node('span');blank.setAttribute('aria-hidden','true');cells.push(blank);}
  for(const date=new Date(first);date<next;date.setDate(date.getDate()+1)){
-  const value=iso(date),key=monday(value),index=(date.getDay()+6)%7,day=store.weeks[key]?.[index]||[],total=daySum(day),absent=day.find(isAbsence),school=day.some(item=>item.workplace==='school'||item.client==='École')||!!store.schoolDates[value];
+  const value=iso(date),key=monday(value),index=(date.getDay()+6)%7,day=store.weeks[key]?.[index]||[],total=daySum(day),absent=day.find(isAbsence),school=day.some(item=>item.workplace==='school'||item.client==='École')||(!day.length&&!!store.schoolDates[value]);
   const kind=absent?'absence':school?'school':total?'work':'empty',status=absent?absent.client:school?(total?fmt(total):'Prévue'):total?fmt(total):'';
   const button=node('button',null,'calendar-day');button.type='button';button.dataset.date=value;button.dataset.kind=kind;button.setAttribute('aria-pressed',String(value===selectedDate()));button.append(node('span',String(date.getDate()),'calendar-number'),node('span',status,'calendar-status'));
   const tasks=Object.values(store.dayTasks[value]||{}),remaining=tasks.filter(task=>!task.done).length;

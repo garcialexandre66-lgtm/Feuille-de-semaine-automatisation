@@ -127,9 +127,11 @@ function dayCard(day,index){
  const d=new Date(week+'T12:00:00');d.setDate(d.getDate()+index);
  heading.append(node('strong',names[index]),node('span',d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})));
  if(iso(d)===iso(new Date())){heading.append(node('span','Aujourd’hui','today-badge'));card.classList.add('is-today');card.setAttribute('aria-current','date');}
- const clients=node('p',day.length?[...new Set(day.map(item=>item.client||'Sans client'))].join(', '):'À remplir','card-clients');
+ const plannedSchool=!!store.schoolDates[iso(d)];
+ const clients=node('p',day.length?[...new Set(day.map(item=>item.client||'Sans client'))].join(', '):plannedSchool?'Cours au CFA':'À remplir','card-clients');
+ if(plannedSchool&&day.length&&!day.some(item=>isAbsence(item)||item.workplace==='school'||item.client==='École'))clients.append(node('span','École prévue au planning','school-plan-note'));
  const issues=SheetReview.dayIssues(day),state=!day.length?'empty':issues.length?'check':'ok';
- const right=node('div',null,'card-right'),indicator=node('span',state==='empty'?'Vide':state==='check'?issues.join(' · '):isDayCompleted(iso(d),day)?'✓ Terminée':'OK','card-state');indicator.dataset.state=state;
+ const right=node('div',null,'card-right'),indicator=node('span',state==='empty'?(plannedSchool?'École prévue':'Vide'):state==='check'?issues.join(' · '):isDayCompleted(iso(d),day)?'✓ Terminée':'OK','card-state');indicator.dataset.state=state==='empty'&&plannedSchool?'school':state;
  card.dataset.completed=String(isDayCompleted(iso(d),day));
  right.append(node('strong',fmt(daySum(day))),indicator);
  const extra=Timesheet.dayOvertime(day);if(extra)right.append(node('span',fmt(extra)+' sup dans la journée','card-state'));

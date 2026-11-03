@@ -61,7 +61,7 @@ const polishedWorkplace=updateWorkplace;updateWorkplace=function(){polishedWorkp
 let editorBaseline='';
 const formFingerprint=form=>JSON.stringify([...new FormData(form)]);
 const polishedOpenEditor=openEditor;
-openEditor=function(index=-1){polishedOpenEditor(index);optionalBons.open=false;editorBaseline=formFingerprint($('form'));};
+openEditor=function(index=-1){polishedOpenEditor(index);if(index<0&&store.schoolDates[selectedDate()]&&!days()[selected].length){$('workplace').value='school';updateWorkplace();}optionalBons.open=false;editorBaseline=formFingerprint($('form'));};
 function hasPendingEdits(){
  return ($('editor').open&&formFingerprint($('form'))!==editorBaseline)||[...document.querySelectorAll('.quick-hours')].some(form=>formFingerprint(form)!==form.dataset.initial);
 }
