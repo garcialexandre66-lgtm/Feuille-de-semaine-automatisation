@@ -49,6 +49,18 @@ with sync_playwright() as p:
     assert page.locator('#weekly-delivery-send').is_disabled()
     page.locator('#weekly-delivery-weekend').check();assert page.locator('#weekly-delivery-send').is_enabled()
     page.get_by_role('button',name='Annuler',exact=True).click();assert len(sent)==1
+    # Google connection is visible immediately in settings; errors are shown beside it.
+    page.locator('#settings-open').click()
+    page.locator('#connect-google').wait_for(state='visible')
+    assert not page.locator('#settings-more').get_attribute('open')
+    assert page.locator('#connect-google').inner_text()=='Connecter mon compte Google'
+    page.locator('#connect-google').click();page.locator('#google-connection-message').wait_for(state='visible')
+    page.wait_for_function("()=>document.querySelector('#google-connection-message').textContent.includes('Cloudflare')")
+    page.screenshot(path='apercus/parametres-google.png',full_page=True)
+    # When configured, the same button starts the actual OAuth flow (navigation mocked).
+    page.route('**/api/google/start',lambda route:route.fulfill(json={'url':'https://accounts.google.com/mock-oauth'}))
+    page.route('https://accounts.google.com/mock-oauth',lambda route:route.fulfill(content_type='text/html',body='Google OAuth test'))
+    page.locator('#connect-google').click();page.wait_for_url('https://accounts.google.com/mock-oauth')
     assert not errors,errors
     browser.close()
 print('OK: authenticated real PDF preview, Google setup state, cancellation without send, explicit confirmation, immutable reviewed version, weekend acknowledgement.')

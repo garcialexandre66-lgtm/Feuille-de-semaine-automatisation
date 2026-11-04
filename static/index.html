@@ -48,6 +48,7 @@
 <dialog id="settings-dialog" aria-labelledby="settings-title">
 <div class="dialog-title"><h2 id="settings-title">Mes paramètres</h2><button id="settings-close" type="button" aria-label="Fermer les paramètres">✕</button></div>
 <label class="settings-name">Mon nom<input id="name" maxlength="100" placeholder="Prénom et nom" autocomplete="name"></label>
+<section class="settings-google" aria-labelledby="settings-google-title"><h3 id="settings-google-title">Mon compte Google</h3><p id="delivery-status" role="status">Vérification de la connexion…</p><button id="connect-google" class="google-connect-button" type="button">Connecter mon compte Google</button><p id="google-connection-message" class="hint" role="alert" hidden></p></section>
 <nav class="settings-shortcuts" aria-label="Mes raccourcis">
 <button id="open-month" type="button">Mes heures</button>
 <button id="open-history" type="button">Mes anciennes semaines</button>
@@ -61,7 +62,7 @@
 <p class="hint">Importez ce rappel une seule fois dans le calendrier du téléphone.</p>
 </details>
 <details id="settings-delivery" name="settings-option"><summary>Envoi automatique du vendredi</summary>
-<p id="delivery-status" role="status">Ouvrez cette rubrique pour vérifier la connexion.</p><button id="connect-google" type="button">Connecter Gmail et Drive</button>
+
 <form id="delivery-form"><label>Destinataire<input id="delivery-to" type="email" required autocomplete="email"></label><label>Mon adresse pour recevoir une copie<input id="delivery-copy" type="email" required autocomplete="email"></label><label>Heure d’envoi · heure de Paris<input id="delivery-time" type="time" value="17:00" required step="900"></label><label class="checkbox-label"><input id="delivery-enabled" type="checkbox"> Envoyer automatiquement le vendredi</label><button type="submit">Enregistrer</button></form>
 <p id="delivery-message" role="status"></p><p class="hint">La semaine doit être complète. Le PDF envoyé est aussi classé dans Drive.</p>
 </details>

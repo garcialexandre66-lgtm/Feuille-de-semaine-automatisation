@@ -246,17 +246,23 @@ window.addEventListener('scroll',event=>{if(!dayActionMenu.contains(event.target
 $('previous-day').hidden=true;$('next-day').hidden=true;
 const gmailButton=node('button','Envoyer la feuille de semaine','gmail-button');gmailButton.id='gmail-pdf';gmailButton.type='button';gmailButton.onclick=()=>openWeeklyDelivery();$('simple-home').querySelector('.download-bar').append(gmailButton);
 async function deliveryStatus(){
- try{const data=await api('/api/delivery');$('delivery-status').textContent=data.connected?'Gmail et Drive connectés.':data.configured?'Connectez votre compte Google.':'Envoi désactivé : la connexion Google doit être configurée sur Cloudflare.';$('connect-google').disabled=!data.configured;
+ try{const data=await api('/api/delivery');$('delivery-status').textContent=data.connected?'Connecté : '+(data.email||'compte Google'):data.configured?'Connecte ton compte pour envoyer tes feuilles à Suzie.':'La connexion Google doit encore être activée pour cette application.';$('connect-google').textContent=data.connected?'Reconnecter mon compte Google':'Connecter mon compte Google';$('delivery-status').dataset.connected=String(data.connected);
   const config=data.settings||{};$('delivery-to').value=config.to||'';$('delivery-copy').value=config.copy||'';$('delivery-time').value=config.time||'17:00';$('delivery-enabled').checked=!!config.enabled;
   if(data.last)$('delivery-message').textContent=data.last.message||data.last.status;
- }catch{$('delivery-status').textContent='Connexion nécessaire pour régler les envois.';}
+ }catch{$('delivery-status').textContent='Connexion Internet et session ouverte nécessaires pour vérifier Google.';}
 }
 const originalSettings=openSettings;
 openSettings=function(){
  for(const details of $('settings-dialog').querySelectorAll('details'))details.open=false;
- originalSettings();$('settings-dialog').scrollTop=0;
+ originalSettings();$('settings-dialog').scrollTop=0;$('google-connection-message').hidden=true;void deliveryStatus();
 };
 $('settings-delivery').addEventListener('toggle',()=>{if($('settings-delivery').open)deliveryStatus();});
 $('settings-open').onclick=openSettings;
-$('connect-google').onclick=async()=>{try{const result=await api('/api/google/start',{});location.assign(result.url);}catch(error){$('delivery-message').textContent=error.message;}};
+$('connect-google').onclick=async()=>{
+ const button=$('connect-google'),message=$('google-connection-message');if(button.disabled)return;
+ button.disabled=true;message.hidden=false;message.textContent='Ouverture de la connexion sécurisée Google…';
+ try{const result=await api('/api/google/start',{});location.assign(result.url);}
+ catch(error){message.textContent=error.message;$('delivery-message').textContent=error.message;}
+ finally{button.disabled=false;}
+};
 $('delivery-form').onsubmit=async event=>{event.preventDefault();try{const result=await api('/api/delivery',{to:$('delivery-to').value,copy:$('delivery-copy').value,time:$('delivery-time').value,enabled:$('delivery-enabled').checked});$('delivery-message').textContent=result.message;}catch(error){$('delivery-message').textContent=error.message;}};
