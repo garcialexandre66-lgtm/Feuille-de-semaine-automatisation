@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, readdir, mkdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { resolve, extname } from 'node:path';
 const setupToken=crypto.randomUUID()+crypto.randomUUID();
@@ -17,7 +17,7 @@ const mf=new Miniflare(convertV4MiniflareOptions({
 }));
 try{
  const db=await mf.getD1Database('DB');
- for(const sql of (await readFile('cloudflare/migrations/0001_initial.sql','utf8')).split(';').filter(s=>s.trim()))await db.prepare(sql).run();
+ for(const file of (await readdir('cloudflare/migrations')).filter(f=>f.endsWith('.sql')).sort())for(const sql of (await readFile('cloudflare/migrations/'+file,'utf8')).split(';').filter(s=>s.trim()))await db.prepare(sql).run();
  const url=await mf.ready;
  await mkdir('apercus',{recursive:true});
  const child=spawn('python3',[process.argv[2]||'tests/cloudflare_browser.py'],{stdio:'inherit',env:{...process.env,ASC_TEST_URL:url.href,ASC_TEST_SETUP:setupToken}});

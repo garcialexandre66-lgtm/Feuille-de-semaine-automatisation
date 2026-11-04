@@ -100,9 +100,70 @@ export async function scheduledDelivery(env,now=new Date()){
   const boundary='asc_'+crypto.randomUUID(),subject=`Feuille de semaine du ${fr(week)} au ${fr(friday)}`;
   const mime=[`From: ${config.connected_email}`,`To: ${config.to_address}`,`Cc: ${config.copy_address}`,`Subject: =?UTF-8?B?${encode64(encoder.encode(subject))}?=`,`Message-ID: <asc-${week}@${new URL(env.APP_ORIGIN).hostname}>`,'MIME-Version: 1.0',`Content-Type: multipart/mixed; boundary="${boundary}"`,'',`--${boundary}`,'Content-Type: text/plain; charset=UTF-8','Content-Transfer-Encoding: base64','',encode64(encoder.encode(`Bonjour,\n\nVeuillez trouver ma feuille de semaine en pièce jointe.\n\n${store.name}`)),`--${boundary}`,'Content-Type: application/pdf',`Content-Disposition: attachment; filename="${filename}"`,'Content-Transfer-Encoding: base64','',encode64(bytes).match(/.{1,76}/g).join('\r\n'),`--${boundary}--`].join('\r\n');
   const sent=await google(tokens.access_token,'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({raw:url64(mime)})});
-  await env.DB.prepare("UPDATE delivery_runs SET status='sent',message='PDF envoyé avec copie et classé dans Drive.',gmail_id=?,updated=? WHERE week=?").bind(sent.id,Date.now(),week).run();
+  await env.DB.prepare("UPDATE delivery_runs SET status='sent',message='PDF envoyé avec copie et classé dans Drive.',recipient=?,gmail_id=?,updated=? WHERE week=?").bind(config.to_address,sent.id,Date.now(),week).run();
  }catch(error){
   const message=stage==='sending'?'Envoi à vérifier dans Gmail avant toute nouvelle tentative. Le PDF a été classé dans Drive.':error.message;
   await env.DB.prepare("UPDATE delivery_runs SET status='error',message=?,updated=? WHERE week=?").bind(message,Date.now(),week).run();
+ }
+}
+
+// The reviewed PDF and envelope are frozen here. Confirmation never rebuilds them
+// from a possibly edited week and never accepts a client-supplied recipient.
+export async function prepareDelivery(env,payload){
+ const friday=new Date(payload.week+'T12:00:00Z');friday.setUTCDate(friday.getUTCDate()+4);
+ const fr=value=>value.split('-').reverse().join('-'),end=friday.toISOString().slice(0,10);
+ const subject=`Feuille de semaine du ${fr(payload.week)} au ${fr(end)}`;
+ const details={to:'s.sanchez@asc66.fr',subject,body:`Bonjour Suzie,\n\nVoici ma feuille de semaine en pièce jointe.\n\n${payload.name}`,filename:`Semaine du ${fr(payload.week)} au ${fr(end)}.pdf`,name:payload.name,days:payload.days};
+ const pdf=await createPdf(payload,async path=>{const response=await env.ASSETS.fetch(new Request(new URL(path,env.APP_ORIGIN||'https://app.invalid')));if(!response.ok)throw Error('Modèle du PDF indisponible.');return new Uint8Array(await response.arrayBuffer());});
+ const id=hex(crypto.getRandomValues(new Uint8Array(32))),now=Date.now(),signature=globalThis.Timesheet.signature(payload.name,[...payload.days,[],[]]),bytes=new Uint8Array(await pdf.arrayBuffer());
+ await env.DB.batch([
+  env.DB.prepare("DELETE FROM delivery_previews WHERE expires<? AND status!='sending'").bind(now),
+  env.DB.prepare('INSERT INTO delivery_previews(id,week,signature,details,pdf,expires,created) VALUES(?,?,?,?,?,?,?)').bind(id,payload.week,signature,JSON.stringify(details),encode64(bytes),now+1800000,now)
+ ]);
+ const info=await deliveryInfo(env),previous=await env.DB.prepare('SELECT status,signature,message,recipient FROM delivery_runs WHERE week=?').bind(payload.week).first();
+ return {id,...details,expires:now+1800000,configured:info.configured,connected:info.connected,from:info.email,scheduled:info.settings.enabled,alreadySent:previous?.status==='sent'&&previous.signature===signature&&previous.recipient===details.to,previousStatus:previous?.status||'',previousMessage:previous?.message||'',issues:globalThis.SheetReview.weekIssues(payload.days)};
+}
+export async function deliveryPreview(env,id){
+ if(typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))throw Error('Aperçu invalide.');
+ const row=await env.DB.prepare('SELECT pdf,details FROM delivery_previews WHERE id=? AND expires>?').bind(id,Date.now()).first();
+ if(!row?.pdf)throw Error('Cet aperçu a expiré. Préparez à nouveau la feuille.');
+ return {bytes:decode64(row.pdf),filename:JSON.parse(row.details).filename};
+}
+export async function confirmDelivery(env,id){
+ if(typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))throw Error('Confirmation invalide.');
+ const draft=await env.DB.prepare('SELECT * FROM delivery_previews WHERE id=?').bind(id).first();
+ if(!draft)throw Error('Préparez à nouveau la feuille avant de l’envoyer.');
+ if(draft.status==='sent')return {sent:true,week:draft.week,message:'Cette feuille a déjà été envoyée à Suzie.'};
+ if(draft.status!=='ready')throw Error('Un envoi est en cours ou reste à vérifier dans Gmail. Ne le renvoyez pas.');
+ if(draft.expires<=Date.now())throw Error('L’aperçu a expiré. Préparez à nouveau la feuille.');
+ const config=await env.DB.prepare('SELECT * FROM delivery_settings WHERE id=1').first();
+ if(!configured(env)||!config?.refresh_token)throw Error('Connectez votre compte Google avant de confirmer l’envoi.');
+ const previous=await env.DB.prepare('SELECT signature,status,recipient FROM delivery_runs WHERE week=?').bind(draft.week).first();
+ if(previous?.status==='sent'&&previous.signature===draft.signature&&previous.recipient==='s.sanchez@asc66.fr')return {sent:true,week:draft.week,message:'Cette feuille a déjà été envoyée. Aucun nouvel e-mail n’a été envoyé.'};
+ const lock=await env.DB.prepare("INSERT INTO delivery_runs(week,signature,status,message,updated,recipient) VALUES(?,?,'preparing','Préparation de l’envoi confirmé.',?,'s.sanchez@asc66.fr') ON CONFLICT(week) DO UPDATE SET signature=excluded.signature,status='preparing',message=excluded.message,drive_id=NULL,gmail_id=NULL,recipient=excluded.recipient,updated=excluded.updated WHERE delivery_runs.status='blocked' OR (delivery_runs.status='sent' AND (delivery_runs.signature!=excluded.signature OR delivery_runs.recipient!=excluded.recipient))").bind(draft.week,draft.signature,Date.now()).run();
+ if(!lock.meta.changes)throw Error('Un envoi est en cours ou reste à vérifier dans Gmail. Ne le renvoyez pas.');
+ const claim=await env.DB.prepare("UPDATE delivery_previews SET status='sending' WHERE id=? AND status='ready'").bind(id).run();
+ if(!claim.meta.changes)throw Error('Cette confirmation a déjà été utilisée.');
+ let stage='preparing';
+ try{
+  const tokens=await googleToken(env,{grant_type:'refresh_token',refresh_token:await unseal(config.refresh_token,env)});
+  const details=JSON.parse(draft.details),boundary='asc_'+crypto.randomUUID();
+  // Fixed destination from the prepared envelope; no CC or external body supplied at send time.
+  const mime=[`From: ${config.connected_email}`,`To: ${details.to}`,`Subject: =?UTF-8?B?${encode64(encoder.encode(details.subject))}?=`,`Message-ID: <asc-${id}@${new URL(env.APP_ORIGIN).hostname}>`,'MIME-Version: 1.0',`Content-Type: multipart/mixed; boundary="${boundary}"`,'',`--${boundary}`,'Content-Type: text/plain; charset=UTF-8','Content-Transfer-Encoding: base64','',encode64(encoder.encode(details.body)),`--${boundary}`,'Content-Type: application/pdf',`Content-Disposition: attachment; filename="${details.filename}"`,'Content-Transfer-Encoding: base64','',draft.pdf.match(/.{1,76}/g).join('\r\n'),`--${boundary}--`].join('\r\n');
+  stage='sending';await env.DB.prepare("UPDATE delivery_runs SET status='sending',message='Envoi confirmé à Suzie en cours.',updated=? WHERE week=?").bind(Date.now(),draft.week).run();
+  const sent=await google(tokens.access_token,'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({raw:url64(mime)})});
+  if(!sent.id)throw Error('Confirmation Gmail manquante.');
+  await env.DB.batch([
+   env.DB.prepare("UPDATE delivery_runs SET status='sent',message='Feuille envoyée à Suzie avec le PDF joint.',gmail_id=?,updated=? WHERE week=?").bind(sent.id,Date.now(),draft.week),
+   env.DB.prepare("UPDATE delivery_previews SET status='sent',pdf='' WHERE id=?").bind(id)
+  ]);
+  return {sent:true,week:draft.week,message:'Feuille envoyée à Suzie avec le PDF joint.'};
+ }catch(error){
+  const uncertain=stage==='sending',message=uncertain?'L’envoi reste à vérifier dans Gmail. Pour éviter un doublon, aucun nouvel envoi ne sera lancé automatiquement.':error.message;
+  await env.DB.batch([
+   env.DB.prepare('UPDATE delivery_runs SET status=?,message=?,updated=? WHERE week=?').bind(uncertain?'error':'blocked',message,Date.now(),draft.week),
+   env.DB.prepare('UPDATE delivery_previews SET status=? WHERE id=?').bind(uncertain?'error':'ready',id)
+  ]);
+  throw Error(message);
  }
 }

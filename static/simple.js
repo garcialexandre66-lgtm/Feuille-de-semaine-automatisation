@@ -152,7 +152,7 @@ async function downloadChecked(payload,share=false){
  const buttons=[$('check-pdf'),gmailButton];buttons.forEach(button=>button.disabled=true);
  try{
   const file=new File([await weekBlob(true,{...payload,days:payload.days.slice(0,5)})],pdfFilename(payload),{type:'application/pdf'});
-  if(share==='gmail'){prepareGmail(file,payload);return;}
+  if(share==='gmail'){await openWeeklyDelivery(payload);return;}
   if(share&&navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'Ma feuille de semaine'});$('status').textContent='Menu de partage fermé.';}catch(error){if(error.name==='AbortError')return;if(error.name!=='NotAllowedError')throw error;download(file,file.name);$('status').textContent='PDF téléchargé. Vous pouvez le joindre à votre message.';}}
   else{download(file,file.name);$('status').textContent='PDF téléchargé.';}
  }
@@ -244,22 +244,7 @@ window.addEventListener('resize',()=>closeDayAction());
 window.addEventListener('scroll',event=>{if(!dayActionMenu.contains(event.target))closeDayAction();},true);
 
 $('previous-day').hidden=true;$('next-day').hidden=true;
-const gmailButton=node('button','Envoyer par Gmail','gmail-button');gmailButton.id='gmail-pdf';gmailButton.type='button';gmailButton.onclick=()=>reviewPdf('gmail');$('simple-home').querySelector('.download-bar').append(gmailButton);
-const gmailDialog=node('dialog'),gmailTitle=node('h2','Envoyer à la secrétaire'),gmailHeading=node('div',null,'dialog-title'),gmailClose=node('button','✕'),gmailRecipient=node('p','À : s.sanchez@asc66.fr'),gmailHelp=node('p',null,'hint'),gmailActions=node('div',null,'review-actions'),gmailApp=node('a','Ouvrir le brouillon dans l’application','gmail-compose primary'),gmailShare=node('button','Partager le PDF','primary'),gmailWeb=node('a','Ouvrir le brouillon dans Gmail sur le web','gmail-compose'),gmailMessage=node('p'),gmailShareDetails=node('details'),gmailShareNote=node('p','Cette option joint le PDF, mais tu dois renseigner le destinataire dans Gmail.','hint');
-gmailDialog.id='gmail-dialog';gmailDialog.setAttribute('aria-label','Envoyer la feuille par Gmail');gmailClose.type='button';gmailClose.setAttribute('aria-label','Fermer');gmailClose.onclick=()=>gmailDialog.close();gmailApp.id='gmail-app-compose';gmailShare.type='button';gmailShare.id='gmail-native-share';gmailWeb.id='gmail-compose';gmailWeb.target='_blank';gmailWeb.rel='noopener noreferrer';gmailMessage.setAttribute('role','status');gmailHeading.append(gmailTitle,gmailClose);gmailActions.append(gmailApp,gmailWeb);gmailShareDetails.append(node('summary','Autre option : partager le PDF joint'),gmailShareNote,gmailShare);gmailDialog.append(gmailHeading,gmailRecipient,gmailHelp,gmailActions,gmailShareDetails,gmailMessage);document.body.append(gmailDialog);
-function prepareGmail(file,payload){
- gmailShareDetails.id='gmail-share-options';gmailShareDetails.open=false;
- const subject=file.name.replace(/\.pdf$/i,''),body='Bonjour,\nVoici ma feuille de semaine en piece jointe.\nGarcia Alexandre';
- let preview=gmailDialog.querySelector('.gmail-body-preview');if(!preview){preview=node('p',null,'gmail-body-preview');gmailDialog.insertBefore(preview,gmailHelp);}preview.textContent=body;
- const url=new URL('https://mail.google.com/mail/');url.search=new URLSearchParams({view:'cm',fs:'1',to:'s.sanchez@asc66.fr',su:subject,body}).toString();
- gmailApp.href='mailto:s.sanchez@asc66.fr?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body.replace(/\n/g,'\r\n'));
- const downloadForCompose=()=>{download(file,file.name);gmailMessage.textContent='PDF téléchargé. Joins-le avec le trombone avant d’envoyer le brouillon.';};
- gmailApp.onclick=downloadForCompose;gmailWeb.href=url.href;gmailWeb.onclick=downloadForCompose;
- const canShare=!!navigator.canShare?.({files:[file]});gmailShareDetails.hidden=!canShare;gmailMessage.textContent='';
- gmailHelp.textContent='Le brouillon contient l’adresse de Suzie et ton message. Le PDF sera téléchargé : joins-le avec le trombone. L’application ouverte est celle choisie pour les e-mails sur ton téléphone.';
- gmailShare.onclick=async()=>{try{await navigator.share({files:[file],title:subject,text:body});gmailMessage.textContent='Menu de partage fermé. Vérifie le destinataire dans Gmail.';}catch(error){if(error.name!=='AbortError')gmailMessage.textContent='Utilise « Ouvrir le brouillon » puis joins le PDF téléchargé.';}};
- gmailDialog.showModal();
-}
+const gmailButton=node('button','Envoyer la feuille de semaine','gmail-button');gmailButton.id='gmail-pdf';gmailButton.type='button';gmailButton.onclick=()=>openWeeklyDelivery();$('simple-home').querySelector('.download-bar').append(gmailButton);
 async function deliveryStatus(){
  try{const data=await api('/api/delivery');$('delivery-status').textContent=data.connected?'Gmail et Drive connectés.':data.configured?'Connectez votre compte Google.':'Envoi désactivé : la connexion Google doit être configurée sur Cloudflare.';$('connect-google').disabled=!data.configured;
   const config=data.settings||{};$('delivery-to').value=config.to||'';$('delivery-copy').value=config.copy||'';$('delivery-time').value=config.time||'17:00';$('delivery-enabled').checked=!!config.enabled;

@@ -50,25 +50,13 @@ try{
  const offlineOrigin=await page.evaluate(()=>performance.timeOrigin);await page.locator('#refresh-app').click();await page.waitForFunction(t=>performance.timeOrigin!==t,offlineOrigin);await page.locator('#application').waitFor({state:'visible'});
  assert.equal(await page.evaluate(()=>store.name),'Modification hors ligne');assert.equal(await page.evaluate(()=>dirty),true);
  await context.setOffline(false);await page.waitForFunction(()=>connected&&!dirty);
- // Desktop Gmail path: draft is addressed correctly; PDF downloads; no mail is sent.
- let gmailUrl='';await context.route('https://mail.google.com/**',route=>{gmailUrl=route.request().url();return route.fulfill({contentType:'text/html',body:'Gmail compose test'});});
- await page.evaluate(()=>Object.defineProperty(navigator,'canShare',{value:()=>false,configurable:true}));
- await page.locator('#gmail-pdf').click();if(await page.locator('#review-dialog').isVisible())await page.locator('#review-download').click();await page.locator('#gmail-dialog').waitFor({state:'visible'});
- assert.equal(await page.locator('#gmail-native-share').isVisible(),false);
- const expectedBody='Bonjour,\nVoici ma feuille de semaine en piece jointe.\nGarcia Alexandre';
- assert.equal(await page.locator('.gmail-body-preview').innerText(),expectedBody);
- await mkdir('../refresh-proof',{recursive:true});await page.screenshot({path:'../refresh-proof/gmail-draft.png',fullPage:true});
- const appUrl=new URL(await page.locator('#gmail-app-compose').getAttribute('href'));
- assert.equal(appUrl.protocol,'mailto:');assert.equal(appUrl.pathname,'s.sanchez@asc66.fr');assert.equal(appUrl.searchParams.get('body').replace(/\r\n/g,'\n'),expectedBody);
- await page.evaluate(()=>$('gmail-app-compose').addEventListener('click',event=>event.preventDefault(),{once:true}));
- const appDownload=page.waitForEvent('download');await page.locator('#gmail-app-compose').click();assert.equal((await appDownload).suggestedFilename(),'Semaine du 26-10-2026 au 30-10-2026.pdf');
- const popupPromise=context.waitForEvent('page'),downloadPromise=page.waitForEvent('download');await page.locator('#gmail-compose').click();const [popup,download]=await Promise.all([popupPromise,downloadPromise]);await popup.waitForLoadState();
- assert.equal(new URL(gmailUrl).searchParams.get('to'),'s.sanchez@asc66.fr');assert.equal(new URL(gmailUrl).searchParams.get('body'),expectedBody);assert.match(new URL(gmailUrl).searchParams.get('su'),/26-10-2026 au 30-10-2026/);assert.equal(download.suggestedFilename(),'Semaine du 26-10-2026 au 30-10-2026.pdf');await popup.close();
- await page.locator('#gmail-dialog').getByRole('button',{name:'Fermer',exact:true}).click();
- // Native sharing path is invoked only by a second, explicit user action.
- await page.evaluate(()=>{Object.defineProperty(navigator,'canShare',{value:()=>true,configurable:true});Object.defineProperty(navigator,'share',{value:async data=>{window.testShare={file:data.files[0].name,bytes:data.files[0].size,text:data.text};},configurable:true});});
- await page.locator('#gmail-pdf').click();if(await page.locator('#review-dialog').isVisible())await page.locator('#review-download').click();await page.locator('#gmail-share-options summary').click();await page.locator('#gmail-native-share').waitFor({state:'visible'});await page.locator('#gmail-native-share').click();
- const shared=await page.evaluate(()=>window.testShare);assert.ok(shared.bytes>1000);assert.equal(shared.text,expectedBody);assert.equal(shared.text.includes('s.sanchez'),false);await page.locator('#gmail-dialog').getByRole('button',{name:'Fermer',exact:true}).click();
+ // Opening a verified attachment never sends an email; a Google connection is explicit.
+ await page.locator('#gmail-pdf').click();await page.locator('#weekly-delivery-preview').waitFor({state:'visible'});
+ assert.equal(await page.locator('#weekly-delivery-send').isDisabled(),true);
+ assert.match(await page.locator('#weekly-delivery-content').innerText(),/s.sanchez@asc66.fr/);
+ const preview=await page.evaluate(async()=>{const response=await fetch(document.querySelector('#weekly-delivery-preview').getAttribute('href'));return {status:response.status,pdf:(await response.text()).startsWith('%PDF-')};});
+ assert.equal(preview.status,200);assert.equal(preview.pdf,true);
+ await page.locator('#weekly-delivery-dialog').getByRole('button',{name:'Annuler',exact:true}).click();
  await mkdir('../refresh-proof',{recursive:true});await page.screenshot({path:'../refresh-proof/mobile.png',fullPage:true});
- assert.deepEqual(errors,[]);console.log('OK: same-tab refresh preserves session and encrypted edits; new tab remains locked; draft cancel protected; offline edits survive; Gmail compose/download and native sharing verified without sending mail.');
+ assert.deepEqual(errors,[]);console.log('OK: same-tab refresh preserves session and encrypted edits; new tab remains locked; draft cancel protected; offline edits survive; authenticated PDF preview verified without sending mail.');
 }finally{await browser?.close();await mf.dispose();}

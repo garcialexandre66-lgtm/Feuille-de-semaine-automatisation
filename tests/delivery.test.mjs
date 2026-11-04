@@ -17,7 +17,7 @@ test('real D1: OAuth is bound to the browser/session; Friday uploads then sends 
  const original=globalThis.fetch;let sends=0,uploads=0,sendFailure=false;
  try{
   const db=await mf.getD1Database('DB');
-  for(const file of ['0001_initial.sql','0002_delivery.sql'])for(const sql of (await readFile('cloudflare/migrations/'+file,'utf8')).split(';').filter(x=>x.trim()))await db.prepare(sql).run();
+  for(const file of ['0001_initial.sql','0002_delivery.sql','0004_delivery_previews.sql'])for(const sql of (await readFile('cloudflare/migrations/'+file,'utf8')).split(';').filter(x=>x.trim()))await db.prepare(sql).run();
   const env={DB:db,GOOGLE_CLIENT_ID:'test-id',GOOGLE_CLIENT_SECRET:'test-secret',APP_ORIGIN:'https://asc.test',ASSETS:{fetch:async request=>new Response(await readFile('cloudflare/assets/'+new URL(request.url).pathname.slice(1)))}};
   assert.equal((await deliveryInfo(env)).connected,false);
   await assert.rejects(saveDelivery(env,{to:'secretaire@example.com',copy:'moi@example.com',time:'17:00',enabled:true}),/Connectez/);

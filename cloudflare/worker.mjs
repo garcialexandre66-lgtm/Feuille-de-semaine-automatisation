@@ -1,5 +1,5 @@
 import '../static/domain.js';
-import { deliveryInfo,saveDelivery,startGoogle,finishGoogle,scheduledDelivery } from './delivery.mjs';
+import { deliveryInfo,saveDelivery,startGoogle,finishGoogle,scheduledDelivery,prepareDelivery,deliveryPreview,confirmDelivery } from './delivery.mjs';
 import { recoveryHtml } from './recovery-page.mjs';
 const encoder=new TextEncoder();
 const hex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
@@ -65,6 +65,10 @@ async function api(request,env,url){
   if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour régler les envois.'});
   return json(200,await deliveryInfo(env));
  }
+ if(request.method==='GET'&&path==='/api/delivery/preview'){
+  if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour voir la feuille.'});
+  try{const preview=await deliveryPreview(env,url.searchParams.get('id'));return new Response(preview.bytes,{headers:{...headers,'Content-Type':'application/pdf','Content-Disposition':'inline; filename="'+preview.filename+'"'}});}catch(error){return json(400,{error:error.message});}
+ }
  if(request.method==='GET'&&path==='/api/session'){const account=await env.DB.prepare('SELECT salt FROM account WHERE id=1').first();return json(200,{deployment:'cloudflare',configured:!!account,salt:account?.salt,authenticated:await authenticated(request,env)});}
  if(request.method==='GET'&&path==='/api/state'){
   if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour retrouver vos semaines.'});
@@ -104,6 +108,17 @@ async function api(request,env,url){
  }
  if(path==='/api/delivery'){
   try{return json(200,await saveDelivery(env,data));}catch(error){return json(400,{error:error.message});}
+ }
+ if(path==='/api/delivery/prepare'){
+  try{
+   if(typeof data.week!=='string'||typeof data.name!=='string'||!data.name.trim()||!Array.isArray(data.days)||data.days.length!==5)throw Error('Vérifiez le nom et la semaine à envoyer.');
+   validateStore({name:data.name,weeks:{[data.week]:[...data.days,[],[]]}});
+   if(!data.days.some(day=>day.length))throw Error('Cette semaine est vide.');
+   return json(200,await prepareDelivery(env,{name:data.name,week:data.week,days:data.days}));
+  }catch(error){return json(400,{error:error.message});}
+ }
+ if(path==='/api/delivery/confirm'){
+  try{if(data.confirm!==true)throw Error('Validez l’aperçu avant l’envoi.');return json(200,await confirmDelivery(env,data.id));}catch(error){return json(400,{error:error.message});}
  }
  if(path==='/api/logout'){
   await env.DB.prepare('DELETE FROM sessions WHERE token=?').bind(await hash(token(request))).run();

@@ -65,3 +65,11 @@ Références de configuration : [OAuth Google](https://developers.google.com/ide
 L’archive du code contient le projet entier, sans dépendances installées ni données personnelles. Remplacer les fichiers correspondants du dépôt en conservant les chemins et la configuration D1 existante. Ne pas copier le contenu dans une seule page HTML et ne pas modifier le Google Sheet pour cette mise à jour. Le déploiement existant exécute `npm run deploy`, qui compile et applique les migrations sans supprimer les semaines.
 
 Commandes de vérification : `npm ci`, `npm test`, `npm run build`, `npx wrangler deploy --dry-run`. Les tests de messagerie et de Drive simulent Google : ils ne contactent aucun destinataire réel.
+
+## Envoi à Suzie après vérification
+
+Le bouton « Envoyer la feuille de semaine » prépare un aperçu privé avec le récapitulatif, le message, l’adresse de Suzie et le PDF joint. Seul « OK, envoyer à Suzie » déclenche l’envoi via le compte Google connecté. Annuler ou consulter l’aperçu n’envoie rien. L’envoi manuel joint le PDF directement, sans copie supplémentaire ni classement dans Drive. La configuration Google décrite ci-dessus reste nécessaire ; l’application indique clairement si elle manque.
+
+La migration `0004_delivery_previews.sql` doit être appliquée avant publication (incluse dans `npm run deploy`). L’aperçu est conservé 30 minutes dans D1 et n’est accessible qu’après connexion à l’application. L’e-mail utilise exactement les octets du PDF préparé ; une modification ultérieure des heures ne change pas la pièce jointe examinée. Les week-ends nécessitent une confirmation explicite de leur exclusion. L’envoi manuel et celui du vendredi utilisent le même verrou par semaine pour éviter les doublons. Une version corrigée déjà envoyée nécessite un nouvel aperçu et une nouvelle confirmation. Une réponse Gmail perdue bloque la relance et demande de vérifier les messages envoyés.
+
+Vérifications sans envoyer de vrais e-mails : `node --test tests/manual-delivery.test.mjs` (D1 réelle, Google simulé) et `npm run build && node tests/cloudflare_browser.mjs tests/weekly_delivery_browser.py` (fenêtre mobile, aperçu PDF réel, confirmation simulée).
