@@ -6,7 +6,7 @@
   "workers_dev": true,
   "keep_vars": true,
   "vars": { "APP_ORIGIN": "https://feuille-de-semaine-automatisation.garcialexandre66.workers.dev" },
-  "triggers": { "crons": ["*/15 * * * 4,5"] },
+  "triggers": { "crons": ["* * * * 4,5"] },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

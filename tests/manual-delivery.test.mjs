@@ -59,6 +59,11 @@ test('manual API requires a session and explicit confirmation, validates the sna
   const session='ab'.repeat(32),hashed=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(session))).toString('hex');
   await db.prepare('INSERT INTO sessions(token,expires) VALUES(?,?)').bind(hashed,Date.now()+60000).run();
   const post=(path,body,auth=true,extra={})=>mf.dispatchFetch('https://app.test'+path,{method:'POST',headers:{'Content-Type':'application/json',...(auth?{Cookie:'asc_session='+session}:{}),...extra},body:JSON.stringify(body)});
+  assert.equal((await mf.dispatchFetch('https://app.test/api/push')).status,401);
+  assert.equal((await post('/api/push/subscribe',{},false)).status,401);
+  const push=await mf.dispatchFetch('https://app.test/api/push',{headers:{Cookie:'asc_session='+session}});assert.equal(push.status,200);
+  const pushData=await push.json();assert.equal(pushData.time,'18:00');assert.ok(pushData.publicKey);assert.ok(!('private_key'in pushData));
+  assert.equal((await post('/api/push/status',{endpoint:'https://localhost/private'})).status,400);
   assert.equal((await post('/api/delivery/prepare',payload(),false)).status,401);
   assert.equal((await post('/api/delivery/confirm',{id:'ab'.repeat(32),confirm:true},false)).status,401);
   assert.equal((await post('/api/delivery/prepare',payload(),true,{Origin:'https://other.test'})).status,403);

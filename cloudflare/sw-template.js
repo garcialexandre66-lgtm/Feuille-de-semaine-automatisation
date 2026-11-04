@@ -20,3 +20,25 @@ self.addEventListener('fetch',event=>{
  if(!ASSETS.includes(url.pathname))return;
  event.respondWith(caches.match(url.pathname,{cacheName:CACHE}).then(cached=>cached||fetch(request,{cache:'no-store'}).then(response=>{if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(url.pathname,copy)));}return response;})).then(withoutRedirect));
 });
+
+self.addEventListener('push',event=>{
+ event.waitUntil((async()=>{
+  let data={};try{data=event.data?.json()||{};}catch{}
+  const week=/^\d{4}-\d{2}-\d{2}$/.test(data.week||'')?data.week:'';
+  await self.registration.showNotification('Feuille de semaine',{
+   body:'Pense à envoyer ta feuille de semaine',icon:'/icons/asc-192.png',badge:'/icons/asc-192.png',
+   tag:'asc-feuille-'+week,renotify:true,data:{url:week?'/?rappel='+week:'/',week}
+  });
+ })());
+});
+self.addEventListener('notificationclick',event=>{
+ event.notification.close();
+ event.waitUntil((async()=>{
+  const value=event.notification.data?.url||'/',url=new URL(value,self.location.origin);
+  if(url.origin!==self.location.origin)return;
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  const existing=windows.find(client=>new URL(client.url).origin===url.origin);
+  if(existing){existing.postMessage({type:'open-week-reminder',week:event.notification.data?.week});await existing.focus();}
+  else await self.clients.openWindow(url.href);
+ })());
+});

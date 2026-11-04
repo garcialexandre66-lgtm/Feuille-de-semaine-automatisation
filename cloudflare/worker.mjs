@@ -1,3 +1,4 @@
+import {pushInfo,pushStatus,subscribePush,unsubscribePush,scheduledPush} from './push.mjs';
 import '../static/domain.js';
 import { deliveryInfo,saveDelivery,startGoogle,finishGoogle,scheduledDelivery,prepareDelivery,deliveryPreview,confirmDelivery } from './delivery.mjs';
 import { recoveryHtml } from './recovery-page.mjs';
@@ -69,6 +70,10 @@ async function api(request,env,url){
   if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour voir la feuille.'});
   try{const preview=await deliveryPreview(env,url.searchParams.get('id'));return new Response(preview.bytes,{headers:{...headers,'Content-Type':'application/pdf','Content-Disposition':'inline; filename="'+preview.filename+'"'}});}catch(error){return json(400,{error:error.message});}
  }
+ if(request.method==='GET'&&path==='/api/push'){
+  if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour activer les notifications.'});
+  return json(200,await pushInfo(env));
+ }
  if(request.method==='GET'&&path==='/api/session'){const account=await env.DB.prepare('SELECT salt FROM account WHERE id=1').first();return json(200,{deployment:'cloudflare',configured:!!account,salt:account?.salt,authenticated:await authenticated(request,env)});}
  if(request.method==='GET'&&path==='/api/state'){
   if(!await authenticated(request,env))return json(401,{error:'Connectez-vous pour retrouver vos semaines.'});
@@ -120,6 +125,9 @@ async function api(request,env,url){
  if(path==='/api/delivery/confirm'){
   try{if(data.confirm!==true)throw Error('Validez l’aperçu avant l’envoi.');return json(200,await confirmDelivery(env,data.id));}catch(error){return json(400,{error:error.message});}
  }
+ if(['/api/push/subscribe','/api/push/status','/api/push/unsubscribe'].includes(path)){
+  try{return json(200,path.endsWith('/subscribe')?await subscribePush(env,data):path.endsWith('/unsubscribe')?await unsubscribePush(env,data.endpoint):await pushStatus(env,data.endpoint));}catch(error){return json(400,{error:error.message});}
+ }
  if(path==='/api/logout'){
   await env.DB.prepare('DELETE FROM sessions WHERE token=?').bind(await hash(token(request))).run();
   return json(200,{ok:true},'asc_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0');
@@ -132,7 +140,7 @@ async function api(request,env,url){
  }
  return json(404,{error:'Page inconnue.'});
 }
-export default {async scheduled(event,env,ctx){ctx.waitUntil(scheduledDelivery(env,new Date(event.scheduledTime)));},async fetch(request,env){
+export default {async scheduled(event,env,ctx){const now=new Date(event.scheduledTime);ctx.waitUntil((async()=>{if(now.getUTCMinutes()%15===0)await scheduledDelivery(env,now).catch(()=>{});await scheduledPush(env,now);})());},async fetch(request,env){
  const url=new URL(request.url);
  try{
   if(url.pathname.startsWith('/api/'))return await api(request,env,url);
