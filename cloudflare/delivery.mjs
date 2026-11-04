@@ -113,7 +113,7 @@ export async function prepareDelivery(env,payload){
  const friday=new Date(payload.week+'T12:00:00Z');friday.setUTCDate(friday.getUTCDate()+4);
  const fr=value=>value.split('-').reverse().join('-'),end=friday.toISOString().slice(0,10);
  const subject=`Feuille de semaine du ${fr(payload.week)} au ${fr(end)}`;
- const details={to:'s.sanchez@asc66.fr',subject,body:`Bonjour Suzie,\n\nVoici ma feuille de semaine en pièce jointe.\n\n${payload.name}`,filename:`Semaine du ${fr(payload.week)} au ${fr(end)}.pdf`,name:payload.name,days:payload.days};
+ const details={to:'s.sanchez@asc66.fr',subject,body:`Bonjour,\n\nVoici ma feuille de semaine en pièce jointe.\n\n${payload.name}`,filename:`Semaine du ${fr(payload.week)} au ${fr(end)}.pdf`,name:payload.name,days:payload.days};
  const pdf=await createPdf(payload,async path=>{const response=await env.ASSETS.fetch(new Request(new URL(path,env.APP_ORIGIN||'https://app.invalid')));if(!response.ok)throw Error('Modèle du PDF indisponible.');return new Uint8Array(await response.arrayBuffer());});
  const id=hex(crypto.getRandomValues(new Uint8Array(32))),now=Date.now(),signature=globalThis.Timesheet.signature(payload.name,[...payload.days,[],[]]),bytes=new Uint8Array(await pdf.arrayBuffer());
  await env.DB.batch([
