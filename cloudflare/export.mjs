@@ -9,6 +9,7 @@ export function dailyOvertime(day){
  let cumulative=0;
  return day.map(item=>{const minutes=total(item),extra=Math.max(0,cumulative+minutes-480)-Math.max(0,cumulative-480);cumulative+=minutes;return extra;});
 }
+export function dailySummary(day){const minutes=day.reduce((sum,item)=>sum+total(item),0);return {minutes,overtime:Math.max(0,minutes-480)};}
 const dateText=value=>{const d=new Date(value+'T12:00:00');return d.toLocaleDateString('fr-FR');};
 async function asset(path){const response=await fetch(path);if(!response.ok)throw Error('Le modèle d’export est indisponible.');return new Uint8Array(await response.arrayBuffer());}
 export async function createPdf(data,readAsset=asset){
@@ -30,10 +31,9 @@ export async function createPdf(data,readAsset=asset){
  // Coordinates measured on the original ASC model, fitted to one A4 page.
  const columns=[52.166,138.263,191.282,233.804,273.688,293.630,313.571,328.791,344.010,360.281,380.222,400.164];
  data.days.slice(0,5).forEach((day,dayIndex)=>{
-  const extras=dailyOvertime(day);
+  const summary=dailySummary(day);
   day.forEach((item,index)=>{
-   const minutes=total(item),overtime=extras[index];
-   const values=[item.client,item.city,item.prep||'',item.intervention||'',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(overtime)];
+   const values=[item.client,item.city,item.prep||'',item.intervention||'',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),index===0?duration(summary.minutes):'',index===0?duration(summary.overtime):''];
    const top=105.8+(dayIndex*8+index)*12.481;
    values.forEach((value,i)=>text(value,columns[i]+1,top,columns[i+1]-columns[i]-2));
   });
@@ -59,9 +59,8 @@ export async function createOds(data){
  put(cells(rows[1])[0],`Nom du technicien : ${data.name}`);
  const end=new Date(data.week+'T12:00:00');end.setDate(end.getDate()+6);
  put(cells(rows[2])[0],`Semaine du ${dateText(data.week)} au ${end.toLocaleDateString('fr-FR')}`);
- data.days.forEach((day,dayIndex)=>{const extras=dailyOvertime(day);day.forEach((item,index)=>{
-  const minutes=total(item),extra=extras[index];
-  const values=[item.client,item.city,item.prep||'',item.intervention||'',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),duration(minutes),duration(extra)];
+ data.days.forEach((day,dayIndex)=>{const summary=dailySummary(day);day.forEach((item,index)=>{
+  const values=[item.client,item.city,item.prep||'',item.intervention||'',item.travel?String(item.travel):'',...fields.slice(1).map(k=>duration(item[k])),index===0?duration(summary.minutes):'',index===0?duration(summary.overtime):''];
   const line=cells(rows[5+dayIndex*8+index]);values.forEach((value,i)=>put(line[i+2],value));
  });});
  files['content.xml']=strToU8(new XMLSerializer().serializeToString(xml));
