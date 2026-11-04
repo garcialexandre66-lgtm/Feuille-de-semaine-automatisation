@@ -40,6 +40,7 @@ function render(){
  $('progress').style.width=`${Math.min(totals[selected]/480*100,100)}%`;
  $('entries').replaceChildren();
  ds[selected].forEach((item,i)=>{const el=node('article',null,'entry'), info=node('div');el.dataset.kind=item.kind||item.workplace||'client';info.append(node('h3',item.client||'Temps pour l’entreprise'));if(item.city)info.append(node('p',item.city));info.append(node('p',fields.flatMap((k,j)=>item[k]?[`${labels[j]} : ${fmt(item[k])}`]:[]).join(' · ')));const actions=node('div',null,'actions');actions.append(node('strong',fmt(sum(item))));const edit=node('button','Modifier');edit.type='button';edit.onclick=()=>openEditor(i);const hours=node('button','Heures');hours.type='button';hours.className='edit-hours';hours.onclick=()=>openQuickHours(i,el);const remove=node('button','Supprimer');remove.type='button';remove.onclick=()=>deleteEntry(i);if(!isAbsence(item))actions.append(hours,edit);actions.append(remove);el.append(info,actions);$('entries').append(el);});
+ if(typeof setupEntryReorder==='function')setupEntryReorder();
  if(!ds[selected].length){const empty=node('div',null,'empty');empty.append(node('b','Une journée à remplir'),node('div','Ajoutez un chantier, un déplacement ou du temps au dépôt.'));$('entries').append(empty);}
  $('add').disabled=onLeave||ds[selected].length>=8;
  $('add').textContent=onLeave?'Retirez l’absence pour ajouter une intervention':'+ Ajouter mon travail';

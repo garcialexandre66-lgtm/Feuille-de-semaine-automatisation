@@ -1,0 +1,6 @@
+.entry{position:relative}#entries .entry:has(.entry-grip){padding-left:44px}
+.entry-grip{position:absolute;left:4px;top:8px;width:36px;min-width:36px;min-height:44px;padding:0;border:0;background:transparent;color:var(--muted,#64748b);font-size:30px;line-height:1;cursor:grab;touch-action:none;-webkit-touch-callout:none;user-select:none}
+.entry-grip:focus-visible{outline:2px solid #2563eb;outline-offset:-3px;border-radius:8px}
+.entry-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
+.entry-drag-source{opacity:.3;outline:2px dashed #3b82f6;outline-offset:-2px}
+.entry-drag-ghost{position:fixed!important;z-index:10000;pointer-events:none;opacity:.96;box-sizing:border-box;box-shadow:0 14px 38px #17255440;outline:2px solid #3b82f6;transform:scale(1.015);margin:0!important;background:var(--surface,#fff);border-radius:14px}
