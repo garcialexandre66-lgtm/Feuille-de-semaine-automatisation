@@ -122,7 +122,7 @@ function pdfFilename(payload){
  return `Semaine du ${date(payload.week)} au ${date(iso(end))}.pdf`;
 }
 async function weekBlob(pdf=true,payload={name:store.name,week,days:days()}){
- if(window.ASC_CLOUDFLARE){const exporter=await import('/cloud-export.js');return pdf?exporter.createPdf(payload):exporter.createOds(payload);}
+ if(window.ASC_CLOUDFLARE){const exporter=await import('/cloud-export.js?format=regular-hours-1');return pdf?exporter.createPdf(payload):exporter.createOds(payload);}
  if(pdf&&payload.days.length===5)payload={...payload,days:[...payload.days,[],[]]};
  const res=await fetch(pdf?'/export/pdf':'/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!res.ok)throw Error(await res.text());return res.blob();
 }
