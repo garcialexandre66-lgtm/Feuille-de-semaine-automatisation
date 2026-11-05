@@ -9,7 +9,7 @@ export function dailyOvertime(day){
  let cumulative=0;
  return day.map(item=>{const minutes=total(item),extra=Math.max(0,cumulative+minutes-480)-Math.max(0,cumulative-480);cumulative+=minutes;return extra;});
 }
-export function dailySummary(day){const minutes=day.reduce((sum,item)=>sum+total(item),0);return {minutes,overtime:Math.max(0,minutes-480)};}
+export function dailySummary(day){const minutes=day.reduce((sum,item)=>sum+total(item),0);return {minutes:Math.min(minutes,480),overtime:Math.max(0,minutes-480)};}
 const dateText=value=>{const d=new Date(value+'T12:00:00');return d.toLocaleDateString('fr-FR');};
 async function asset(path){const response=await fetch(path);if(!response.ok)throw Error('Le modèle d’export est indisponible.');return new Uint8Array(await response.arrayBuffer());}
 export async function createPdf(data,readAsset=asset){
