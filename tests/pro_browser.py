@@ -25,7 +25,9 @@ with sync_playwright() as p:
     assert page.locator('#connection-indicator').inner_text()=='À jour'
     assert page.locator('#weekly-progress').get_attribute('aria-valuenow')=='900'
     assert '1 / 5' in page.locator('.week-completed').inner_text()
-    assert page.locator('.bottom-dock button').count()==3
+    # Version D : Semaine, Calendrier, Saisir, Bilan, Réglages.
+    assert page.locator('.bottom-dock button').count()==5
+    assert page.locator('.bottom-dock #settings-open').count()==1
     assert page.locator('#nav-week').get_attribute('aria-current')=='page'
     page.screenshot(path='apercus/pro-home.png')
     page.locator('#open-calendar').click();assert page.locator('#calendar-dialog').is_visible()
